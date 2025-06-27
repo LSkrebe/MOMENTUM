@@ -16,7 +16,8 @@ const { width } = Dimensions.get('window');
 const BOTTLE_CONTAINER_PADDING = 24;
 const BOTTLE_WIDTH = width - BOTTLE_CONTAINER_PADDING * 2;
 const BOTTLE_HEIGHT = 74;
-const BOTTLE_SEGMENTS = 7;
+const BOTTLE_SEGMENTS = 8;
+const MIN_FILL = 1 / (BOTTLE_SEGMENTS * 2);
 
 // Dummy data for UI
 const user = new User({
@@ -27,7 +28,7 @@ const user = new User({
 });
 const habits = [
   new Habit({ title: 'Morning Run', currentPrice: 45, streakCount: 23, completedToday: true }),
-  new Habit({ title: 'Read 30min', currentPrice: 25, streakCount: 12, completedToday: false }),
+  new Habit({ title: 'Read Book', currentPrice: 25, streakCount: 12, completedToday: false }),
   new Habit({ title: 'Meditation', currentPrice: 15, streakCount: 7, missedToday: true }),
 ];
 const investments = [
@@ -42,17 +43,33 @@ const investmentMeta = [
 ];
 
 function getInitialHabitState() {
-  // Each habit: { ...habit, fillLevel: 0-7, completedToday: boolean, animatedFill: Animated.Value, animatedColor: Animated.Value }
-  return habits.map(habit => {
-    const fillLevel = habit.completedToday ? 1 : 0;
-    return {
-      ...habit,
-      fillLevel,
-      completedToday: !!habit.completedToday,
-      animatedFill: new Animated.Value(fillLevel / BOTTLE_SEGMENTS),
-      animatedColor: new Animated.Value(fillLevel > 0 ? 1 : 0),
-    };
-  });
+  // For testing: first empty (shows MIN_FILL), second halfway, third one away from full
+  return [
+    {
+      ...habits[0],
+      fillLevel: 0,
+      completedToday: false,
+      animatedFill: new Animated.Value(MIN_FILL),
+      animatedColor: new Animated.Value(0),
+      disabled: false,
+    },
+    {
+      ...habits[1],
+      fillLevel: Math.floor(BOTTLE_SEGMENTS / 2),
+      completedToday: false,
+      animatedFill: new Animated.Value((Math.floor(BOTTLE_SEGMENTS / 2) / BOTTLE_SEGMENTS)),
+      animatedColor: new Animated.Value(0),
+      disabled: false,
+    },
+    {
+      ...habits[2],
+      fillLevel: BOTTLE_SEGMENTS - 1,
+      completedToday: false,
+      animatedFill: new Animated.Value(((BOTTLE_SEGMENTS - 1) / BOTTLE_SEGMENTS)),
+      animatedColor: new Animated.Value(0),
+      disabled: false,
+    },
+  ];
 }
 
 export default function PortfolioScreen() {
@@ -62,6 +79,8 @@ export default function PortfolioScreen() {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const [displayCoins, setDisplayCoins] = useState(0);
   const [habitList, setHabitList] = useState(getInitialHabitState());
+  // Per-habit promise queue for robust serialization
+  const queueRef = useRef(Array(habitList.length).fill(Promise.resolve()));
 
   useEffect(() => {
     const listener = animatedValue.addListener(({ value }) => {
@@ -77,7 +96,8 @@ export default function PortfolioScreen() {
 
   // Animate fill and color for a habit
   const animateHabit = (i: number, fillLevel: number, completed: boolean) => {
-    const toFill = fillLevel / BOTTLE_SEGMENTS;
+    let toFill = fillLevel / BOTTLE_SEGMENTS;
+    if (fillLevel === 0) toFill = MIN_FILL;
     Animated.timing(habitList[i].animatedFill, {
       toValue: toFill,
       duration: 400,
@@ -92,50 +112,145 @@ export default function PortfolioScreen() {
 
   // Handle bottle press
   const handleBottlePress = (i: number) => {
+    // Set disabled true immediately
     setHabitList(prev => {
-      const habit = prev[i];
-      let newFill = habit.fillLevel;
-      let newCompleted = habit.completedToday;
-      let newStreak = habit.streakCount || 0;
-      if (!habit.completedToday) {
-        // Mark as complete for today
-        newFill = Math.min(habit.fillLevel + 1, BOTTLE_SEGMENTS);
-        newCompleted = true;
-        newStreak = newStreak + 1;
-        if (newFill === BOTTLE_SEGMENTS) {
-          // Animate to full, then reset
-          animateHabit(i, BOTTLE_SEGMENTS, true);
-          setTimeout(() => {
-            setHabitList(prev2 => {
-              const updated = [...prev2];
-              updated[i] = {
-                ...updated[i],
-                fillLevel: 0,
-                completedToday: false,
-                streakCount: 0,
-              };
-              animateHabit(i, 0, false);
-              return updated;
-            });
-          }, 600);
-        } else {
-          animateHabit(i, newFill, true);
-        }
-      } else {
-        // Uncheck for today
-        newFill = Math.max(habit.fillLevel - 1, 0);
-        newCompleted = false;
-        newStreak = Math.max(newStreak - 1, 0);
-        animateHabit(i, newFill, false);
-      }
       const updated = [...prev];
-      updated[i] = {
-        ...habit,
-        fillLevel: newFill,
-        completedToday: newCompleted,
-        streakCount: newStreak,
-      };
+      updated[i] = { ...updated[i], disabled: true };
       return updated;
+    });
+    // Enqueue the press/animation/state update for this habit
+    queueRef.current[i] = queueRef.current[i].then(async () => {
+      return new Promise<void>(resolve => {
+        setHabitList(prev => {
+          const habit = prev[i];
+          let newFill = habit.fillLevel;
+          let newCompleted = habit.completedToday;
+          let newStreak = habit.streakCount || 0;
+          const updated = [...prev];
+          if (!habit.completedToday) {
+            // Mark as complete for today
+            newFill = Math.min(habit.fillLevel + 1, BOTTLE_SEGMENTS);
+            newCompleted = true;
+            newStreak = newStreak + 1;
+            if (newFill === BOTTLE_SEGMENTS) {
+              Animated.timing(habit.animatedFill, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: false,
+              }).start(() => {
+                setTimeout(() => {
+                  setHabitList(prev2 => {
+                    const updated2 = [...prev2];
+                    updated2[i] = {
+                      ...updated2[i],
+                      fillLevel: 0,
+                      completedToday: true,
+                      streakCount: (updated2[i].streakCount || 0) + 1,
+                    };
+                    // Animate to min fill and keep green (completed)
+                    Animated.timing(updated2[i].animatedFill, {
+                      toValue: MIN_FILL,
+                      duration: 400,
+                      useNativeDriver: false,
+                    }).start();
+                    Animated.timing(updated2[i].animatedColor, {
+                      toValue: 1,
+                      duration: 400,
+                      useNativeDriver: false,
+                    }).start();
+                    setTimeout(() => {
+                      setHabitList(prev3 => {
+                        const updated3 = [...prev3];
+                        updated3[i] = { ...updated3[i], disabled: false };
+                        return updated3;
+                      });
+                      resolve();
+                    }, 200);
+                    return updated2;
+                  });
+                }, 200);
+              });
+              return updated;
+            } else {
+              Animated.timing(habit.animatedFill, {
+                toValue: newFill / BOTTLE_SEGMENTS,
+                duration: 400,
+                useNativeDriver: false,
+              }).start(() => {
+                setTimeout(() => {
+                  setHabitList(prev2 => {
+                    const updated2 = [...prev2];
+                    updated2[i] = { ...updated2[i], disabled: false };
+                    return updated2;
+                  });
+                  resolve();
+                }, 200);
+              });
+              Animated.timing(habit.animatedColor, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: false,
+              }).start();
+            }
+          } else {
+            // Uncheck for today
+            if (habit.fillLevel === 0 && habit.completedToday && (habit.streakCount || 0) > 0) {
+              newFill = BOTTLE_SEGMENTS - 1;
+              newCompleted = false;
+              newStreak = Math.max((habit.streakCount || 0) - 1, 0);
+              Animated.timing(habit.animatedFill, {
+                toValue: (BOTTLE_SEGMENTS - 1) / BOTTLE_SEGMENTS,
+                duration: 400,
+                useNativeDriver: false,
+              }).start(() => {
+                setTimeout(() => {
+                  setHabitList(prev2 => {
+                    const updated2 = [...prev2];
+                    updated2[i] = { ...updated2[i], disabled: false };
+                    return updated2;
+                  });
+                  resolve();
+                }, 200);
+              });
+              Animated.timing(habit.animatedColor, {
+                toValue: 0,
+                duration: 400,
+                useNativeDriver: false,
+              }).start();
+            } else {
+              newFill = Math.max(habit.fillLevel - 1, 0);
+              newCompleted = false;
+              newStreak = Math.max(newStreak - 1, 0);
+              Animated.timing(habit.animatedFill, {
+                toValue: newFill === 0 ? MIN_FILL : newFill / BOTTLE_SEGMENTS,
+                duration: 400,
+                useNativeDriver: false,
+              }).start(() => {
+                setTimeout(() => {
+                  setHabitList(prev2 => {
+                    const updated2 = [...prev2];
+                    updated2[i] = { ...updated2[i], disabled: false };
+                    return updated2;
+                  });
+                  resolve();
+                }, 200);
+              });
+              Animated.timing(habit.animatedColor, {
+                toValue: 0,
+                duration: 400,
+                useNativeDriver: false,
+              }).start();
+            }
+          }
+          updated[i] = {
+            ...updated[i],
+            fillLevel: newFill,
+            completedToday: newCompleted,
+            streakCount: newStreak,
+          };
+          return updated;
+        });
+      });
     });
   };
 
@@ -238,6 +353,7 @@ export default function PortfolioScreen() {
                 <Pressable
                   style={bottleStyles.bottleOuter}
                   onPress={() => handleBottlePress(i)}
+                  disabled={habit.disabled}
                 >
                   <Animated.View
                     style={[
