@@ -7,6 +7,8 @@ export class Habit {
   currentPrice?: number;
   streakCount?: number;
   completionRate?: number;
+  completedToday?: boolean;
+  missedToday?: boolean;
 
   constructor(params: Partial<Habit>) {
     Object.assign(this, params);

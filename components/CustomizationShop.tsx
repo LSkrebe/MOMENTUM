@@ -27,7 +27,7 @@ export const CustomizationShop: React.FC = () => (
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.light.background,
+    backgroundColor: Colors.main.background,
     borderRadius: 12,
     padding: 16,
     marginVertical: 8,
@@ -39,13 +39,13 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.light.text,
+    color: Colors.main.textPrimary,
     marginBottom: 8,
   },
   section: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.light.tint,
+    color: Colors.main.accent,
     marginTop: 10,
   },
 }); 

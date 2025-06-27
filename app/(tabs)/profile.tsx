@@ -25,7 +25,7 @@ export default function ProfileScreen() {
         <Text style={[styles.title, { color: user.customizations?.titleColor }]}>Elite Investor</Text>
         <Text style={styles.name}>{user.name}</Text>
         <Text style={styles.theme}>Theme: {user.customizations?.backgroundTheme}</Text>
-      </View>
+    </View>
       <ProfileStats user={user} />
       <CustomizationShop />
       <Text style={styles.section}>Settings</Text>

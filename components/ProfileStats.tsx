@@ -9,28 +9,86 @@ interface ProfileStatsProps {
 }
 
 export const ProfileStats: React.FC<ProfileStatsProps> = ({ user }) => (
-  <View style={styles.container}>
-    <Text style={styles.stat}>Habits Completed: {user.stats?.habitsCompleted}</Text>
-    <Text style={styles.stat}>Longest Streak: {user.stats?.longestStreak} days</Text>
-    <Text style={styles.stat}>Investment Accuracy: {user.stats?.investmentAccuracy}%</Text>
-    <Text style={styles.stat}>HabitCoins Earned: {HABITCOIN_SYMBOL}{user.stats?.habitCoinsEarned}</Text>
+  <View style={styles.card}>
+    <Text style={styles.header}>Stats</Text>
+    <View style={styles.row}>
+      <View style={styles.statBlock}>
+        <Text style={styles.statNumber}>{user.stats?.habitsCompleted}</Text>
+        <Text style={styles.statLabel}>Habits</Text>
+      </View>
+      <View style={styles.statBlock}>
+        <Text style={styles.statNumber}>{user.stats?.longestStreak}d</Text>
+        <Text style={styles.statLabel}>Streak</Text>
+        <View style={styles.progressBarBg}>
+          <View style={[styles.progressBar, { width: `${Math.min((user.stats?.longestStreak || 0) / 100, 1) * 100}%` }]} />
+        </View>
+      </View>
+      <View style={styles.statBlock}>
+        <Text style={styles.statNumber}>{user.stats?.investmentAccuracy}%</Text>
+        <Text style={styles.statLabel}>Accuracy</Text>
+        <View style={styles.progressBarBg}>
+          <View style={[styles.progressBar, { width: `${Math.min((user.stats?.investmentAccuracy || 0) / 100, 1) * 100}%`, backgroundColor: Colors.main.accent }]} />
+        </View>
+      </View>
+      <View style={styles.statBlock}>
+        <Text style={styles.statNumber}>{HABITCOIN_SYMBOL}{user.stats?.habitCoinsEarned}</Text>
+        <Text style={styles.statLabel}>Earned</Text>
+      </View>
+    </View>
   </View>
 );
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
-    padding: 16,
+  card: {
+    backgroundColor: Colors.main.card,
+    borderRadius: 16,
+    padding: 18,
     marginVertical: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowColor: Colors.main.accentSoft,
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: Colors.main.border,
   },
-  stat: {
+  header: {
     fontSize: 16,
-    color: Colors.light.text,
-    marginVertical: 2,
+    fontWeight: 'bold',
+    color: Colors.main.textPrimary,
+    marginBottom: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  statBlock: {
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 2,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.main.accent,
+  },
+  statLabel: {
+    fontSize: 13,
+    color: Colors.main.textPrimary,
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  progressBarBg: {
+    width: 40,
+    height: 5,
+    backgroundColor: Colors.main.border,
+    borderRadius: 3,
+    marginTop: 2,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: 5,
+    backgroundColor: Colors.main.accent,
+    borderRadius: 3,
   },
 }); 
