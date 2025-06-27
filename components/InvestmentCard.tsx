@@ -13,17 +13,22 @@ interface InvestmentCardProps {
 
 export const InvestmentCard: React.FC<InvestmentCardProps> = ({ investment, habitTitle, profit, percent }) => {
   const isGain = profit >= 0;
+  const chart = isGain ? ['/', '/', '/'] : ['\\', '\\', '\\'];
   return (
     <View style={styles.card}>
       <View style={styles.row}>
         <Text style={styles.title}>{habitTitle}</Text>
-        <Text style={[styles.percent, { color: isGain ? Colors.main.accent : Colors.main.textSecondary }]}> {isGain ? '▲' : '▼'} {percent}%</Text>
+        <Text style={[styles.percent, { color: isGain ? Colors.main.accent : Colors.main.textSecondary }]}> {HABITCOIN_SYMBOL}{Math.abs(profit)} {isGain ? '▲' : '▼'}</Text>
       </View>
       <View style={styles.row}>
         <Text style={styles.value}>{HABITCOIN_SYMBOL}{investment.purchasePrice}</Text>
-        <Text style={[styles.profit, { color: isGain ? Colors.main.accent : Colors.main.textSecondary }]}> {isGain ? '+' : ''}{HABITCOIN_SYMBOL}{profit}</Text>
       </View>
       <Text style={styles.shares}>Shares: {investment.sharesOwned}</Text>
+      <View style={styles.chartWrap} pointerEvents="none">
+        {chart.map((c, i) => (
+          <Text key={i} style={[styles.chartLine, { color: isGain ? Colors.main.accent : Colors.main.textSecondary }]}>{c}</Text>
+        ))}
+      </View>
     </View>
   );
 };
@@ -71,4 +76,6 @@ const styles = StyleSheet.create({
     color: Colors.main.textPrimary,
     marginTop: 2,
   },
+  chartWrap: { position: 'absolute', right: 12, bottom: 10, flexDirection: 'row', alignItems: 'flex-end' },
+  chartLine: { fontSize: 18, marginLeft: 1, marginRight: 1, fontWeight: 'bold' },
 }); 

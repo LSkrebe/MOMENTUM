@@ -11,6 +11,7 @@ import { HABITCOIN_SYMBOL } from '../../constants/Currency';
 import { User } from '../../models/User';
 import { Habit } from '../../models/Habit';
 import { Investment } from '../../models/Investment';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const BOTTLE_CONTAINER_PADDING = 24;
@@ -40,6 +41,13 @@ const investmentMeta = [
   { title: "Sarah's Gym", emoji: '💪', percent: 12.3, profit: 23.5, streak: 14 },
   { title: "Mike's Coding", emoji: '💻', percent: 8.1, profit: 15.25, streak: 21 },
   { title: "Lisa's Reading", emoji: '📚', percent: -3.2, profit: -8.5, streak: 9 },
+];
+
+// Add mock data for top investors
+const topInvestors = [
+  { name: 'Sarah', avatar: require('../../assets/images/icon.png'), amount: 320 },
+  { name: 'Mike', avatar: require('../../assets/images/icon.png'), amount: 210 },
+  { name: 'Lisa', avatar: require('../../assets/images/icon.png'), amount: 150 },
 ];
 
 function getInitialHabitState() {
@@ -94,6 +102,8 @@ export default function PortfolioScreen() {
   const [displayPortfolio, setDisplayPortfolio] = useState(myHabitsValue + investmentsValue);
   const [displayMyHabits, setDisplayMyHabits] = useState(myHabitsValue);
   const [displayPnl, setDisplayPnl] = useState(todayPnl);
+
+  const router = useRouter();
 
   useEffect(() => {
     const listener = animatedValue.addListener(({ value }) => {
@@ -216,7 +226,7 @@ export default function PortfolioScreen() {
                         return updated3;
                       });
                       resolve();
-                    }, 200);
+                    }, 600);
                     return updated2;
                   });
                 }, 200);
@@ -327,8 +337,8 @@ export default function PortfolioScreen() {
             {/* Logo icon on the left, no border or extra styling */}
             <Image source={user.profileImage ? { uri: user.profileImage } : require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
             {/* Centered title */}
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>PORTFOLIO</Text>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>MOMENTUM</Text>
             </View>
             {/* Empty view for symmetry */}
             <View style={{ width: 32, height: 32 }} />
@@ -454,18 +464,42 @@ export default function PortfolioScreen() {
             );
           })}
         </View>
+        {/* Top Investors Section (neutral card) */}
+        <View style={{ paddingHorizontal: 12, marginBottom: 8 }}>
+          <GlassCard style={{ backgroundColor: Colors.main.surface }}>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>TOP INVESTORS</Text>
+              <Text style={styles.sectionLink} onPress={() => router.push('/social')}>View All →</Text>
+            </View>
+            <View style={{ height: 8 }} />
+            {topInvestors.map((inv, i) => {
+              const isGain = inv.amount >= 0;
+              return (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.main.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                    <Image source={inv.avatar} style={{ width: 32, height: 32, borderRadius: 16 }} />
+                  </View>
+                  <Text style={{ flex: 1, color: Colors.main.textPrimary, fontWeight: 'bold' }}>{inv.name}</Text>
+                  <Text style={{ color: isGain ? Colors.main.accent : Colors.main.textSecondary, fontWeight: 'bold' }}>
+                    {HABITCOIN_SYMBOL}{Math.abs(inv.amount)} {isGain ? '▲' : '▼'}
+                  </Text>
+                </View>
+              );
+            })}
+          </GlassCard>
+        </View>
         {/* Investments Section (neutral card) */}
         <View style={{ paddingHorizontal: 12 }}>
           <GlassCard style={{ backgroundColor: Colors.main.surface }}>
             <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>📈 TOP INVESTMENTS</Text>
-              <Text style={styles.sectionLink}>View All →</Text>
+              <Text style={styles.sectionTitle}>TOP INVESTMENTS</Text>
+              <Text style={styles.sectionLink} onPress={() => router.push('/market')}>View All →</Text>
             </View>
             {investments.map((inv, i) => (
               <InvestmentCard
                 key={i}
                 investment={inv}
-                habitTitle={investmentMeta[i]?.title + ' ' + investmentMeta[i]?.emoji}
+                habitTitle={investmentMeta[i]?.title}
                 profit={investmentMeta[i]?.profit}
                 percent={investmentMeta[i]?.percent}
               />
