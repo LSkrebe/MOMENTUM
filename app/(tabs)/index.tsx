@@ -28,7 +28,7 @@ const user = new User({
 });
 const habits = [
   new Habit({ title: 'Morning Run', currentPrice: 45, streakCount: 23, completedToday: true }),
-  new Habit({ title: 'Read Book', currentPrice: 25, streakCount: 12, completedToday: false }),
+  new Habit({ title: 'Book Read', currentPrice: 25, streakCount: 12, completedToday: false }),
   new Habit({ title: 'Meditation', currentPrice: 15, streakCount: 7, missedToday: true }),
 ];
 const investments = [
@@ -81,6 +81,19 @@ export default function PortfolioScreen() {
   const [habitList, setHabitList] = useState(getInitialHabitState());
   // Per-habit promise queue for robust serialization
   const queueRef = useRef(Array(habitList.length).fill(Promise.resolve()));
+  // Track myHabitsValue and todayPnl
+  const [myHabitsValue, setMyHabitsValue] = useState(() => habitList.reduce((sum, h) => sum + (h.completedToday ? (h.currentPrice || 0) : 0), 0));
+  const [todayPnl, setTodayPnl] = useState(0);
+  // For demo, static investments value
+  const investmentsValue = 1000.25;
+
+  // Add animated values for portfolio, myHabits, and todayPnl
+  const animatedPortfolio = useRef(new Animated.Value(myHabitsValue + investmentsValue)).current;
+  const animatedMyHabits = useRef(new Animated.Value(myHabitsValue)).current;
+  const animatedPnl = useRef(new Animated.Value(todayPnl)).current;
+  const [displayPortfolio, setDisplayPortfolio] = useState(myHabitsValue + investmentsValue);
+  const [displayMyHabits, setDisplayMyHabits] = useState(myHabitsValue);
+  const [displayPnl, setDisplayPnl] = useState(todayPnl);
 
   useEffect(() => {
     const listener = animatedValue.addListener(({ value }) => {
@@ -92,6 +105,41 @@ export default function PortfolioScreen() {
       useNativeDriver: false,
     }).start();
     return () => animatedValue.removeListener(listener);
+  }, []);
+
+  // Animate values on change
+  useEffect(() => {
+    Animated.timing(animatedPortfolio, {
+      toValue: myHabitsValue + investmentsValue,
+      duration: 600,
+      useNativeDriver: false,
+    }).start();
+  }, [myHabitsValue, investmentsValue]);
+  useEffect(() => {
+    Animated.timing(animatedMyHabits, {
+      toValue: myHabitsValue,
+      duration: 600,
+      useNativeDriver: false,
+    }).start();
+  }, [myHabitsValue]);
+  useEffect(() => {
+    Animated.timing(animatedPnl, {
+      toValue: todayPnl,
+      duration: 600,
+      useNativeDriver: false,
+    }).start();
+  }, [todayPnl]);
+
+  // Listen to animated values
+  useEffect(() => {
+    const p = animatedPortfolio.addListener(({ value }) => setDisplayPortfolio(value));
+    const h = animatedMyHabits.addListener(({ value }) => setDisplayMyHabits(value));
+    const t = animatedPnl.addListener(({ value }) => setDisplayPnl(value));
+    return () => {
+      animatedPortfolio.removeListener(p);
+      animatedMyHabits.removeListener(h);
+      animatedPnl.removeListener(t);
+    };
   }, []);
 
   // Animate fill and color for a habit
@@ -132,6 +180,9 @@ export default function PortfolioScreen() {
             newFill = Math.min(habit.fillLevel + 1, BOTTLE_SEGMENTS);
             newCompleted = true;
             newStreak = newStreak + 1;
+            // Update values
+            setMyHabitsValue(v => v + (habit.currentPrice || 0));
+            setTodayPnl(p => p + (habit.currentPrice || 0));
             if (newFill === BOTTLE_SEGMENTS) {
               Animated.timing(habit.animatedFill, {
                 toValue: 1,
@@ -198,6 +249,9 @@ export default function PortfolioScreen() {
               newFill = BOTTLE_SEGMENTS - 1;
               newCompleted = false;
               newStreak = Math.max((habit.streakCount || 0) - 1, 0);
+              // Update values
+              setMyHabitsValue(v => v - (habit.currentPrice || 0));
+              setTodayPnl(p => p - (habit.currentPrice || 0));
               Animated.timing(habit.animatedFill, {
                 toValue: (BOTTLE_SEGMENTS - 1) / BOTTLE_SEGMENTS,
                 duration: 400,
@@ -221,6 +275,9 @@ export default function PortfolioScreen() {
               newFill = Math.max(habit.fillLevel - 1, 0);
               newCompleted = false;
               newStreak = Math.max(newStreak - 1, 0);
+              // Update values
+              setMyHabitsValue(v => v - (habit.currentPrice || 0));
+              setTodayPnl(p => p - (habit.currentPrice || 0));
               Animated.timing(habit.animatedFill, {
                 toValue: newFill === 0 ? MIN_FILL : newFill / BOTTLE_SEGMENTS,
                 duration: 400,
@@ -267,19 +324,28 @@ export default function PortfolioScreen() {
         {/* Portfolio Header Card (Greener) */}
         <View style={[styles.headerBg, { backgroundColor: Colors.main.accent }]}> 
           <View style={styles.headerRow}>
-            <View style={styles.avatarWrap}>
-              <Image source={user.profileImage ? { uri: user.profileImage } : require('../../assets/images/icon.png')} style={styles.avatar} />
+            {/* Logo icon on the left, no border or extra styling */}
+            <Image source={user.profileImage ? { uri: user.profileImage } : require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
+            {/* Centered title */}
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>PORTFOLIO</Text>
             </View>
-            <Text style={[styles.headerTitle, { color: Colors.main.background }]}>PORTFOLIO</Text>
-            <Text style={[styles.bell, { color: Colors.main.background }]}>🔔</Text>
+            {/* Empty view for symmetry */}
+            <View style={{ width: 32, height: 32 }} />
           </View>
-          <Text style={[styles.portfolioValue, { color: Colors.main.background }]}>
-            {HABITCOIN_SYMBOL} {displayCoins.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <Text style={[styles.portfolioValue, { color: Colors.main.background }]}> 
+            {HABITCOIN_SYMBOL} {displayPortfolio.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
-          <Text style={[styles.portfolioSub, { color: Colors.main.background }]}>Total Value <Text style={{ color: Colors.main.background }}>↗️ +Ⱨ23.14</Text> Today</Text>
+          <Text style={{ color: Colors.main.background, fontSize: 18, fontWeight: 'normal', textAlign: 'center', marginBottom: 2 }}>
+            Today {displayPnl >= 0 ? '+' : ''}{displayPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </Text>
           <View style={styles.pieRow}>
-            <Text style={[styles.pieStat, { color: Colors.main.background }]}><Text style={{ color: Colors.main.background }}>📊 65%</Text> My Habits{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}1,847.25</Text></Text>
-            <Text style={[styles.pieStat, { color: Colors.main.background }]}><Text style={{ color: Colors.main.background }}>📈 35%</Text> Investments{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}1,000.25</Text></Text>
+            <Text style={[styles.pieStat, { color: Colors.main.background }]}>
+              My Habits{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{displayMyHabits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+            </Text>
+            <Text style={[styles.pieStat, { color: Colors.main.background }]}>
+              Investments{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{investmentsValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+            </Text>
           </View>
         </View>
         {/* Habits as Glassy Bottles (vertical stack, animated) */}
@@ -455,10 +521,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 2,
-  },
-  bell: {
-    fontSize: 22,
-    color: Colors.main.background,
   },
   portfolioValue: {
     color: Colors.main.background,
