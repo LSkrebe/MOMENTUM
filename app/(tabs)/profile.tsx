@@ -9,7 +9,7 @@ import { User } from '../../models/User';
 const user = new User({
   name: 'Alex',
   profileImage: '',
-  stats: { habitsCompleted: 1247, longestStreak: 67, investmentAccuracy: 73, habitCoinsEarned: 12456 },
+  stats: { habitsCompleted: 1247, longestStreak: 67, supportAccuracy: 73, habitCoinsEarned: 12456 },
   customizations: { titleColor: '#ffd700', backgroundTheme: 'Galaxy', border: 'Animated', icons: [] },
 });
 
@@ -22,7 +22,7 @@ export default function ProfileScreen() {
     >
       <View style={styles.profileHeader}>
         <Image source={{ uri: user.profileImage || undefined }} style={styles.avatar} />
-        <Text style={[styles.title, { color: user.customizations?.titleColor }]}>Elite Investor</Text>
+        <Text style={[styles.title, { color: user.customizations?.titleColor }]}>Elite Supporter</Text>
         <Text style={styles.name}>{user.name}</Text>
         <Text style={styles.theme}>Theme: {user.customizations?.backgroundTheme}</Text>
     </View>

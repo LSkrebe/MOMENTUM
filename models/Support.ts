@@ -1,12 +1,12 @@
-export class Investment {
+export class Support {
   id?: string;
-  investorId?: string;
+  supporterId?: string;
   habitId?: string;
   sharesOwned?: number;
   purchasePrice?: number;
   purchaseDate?: string;
 
-  constructor(params: Partial<Investment>) {
+  constructor(params: Partial<Support>) {
     Object.assign(this, params);
   }
 } 

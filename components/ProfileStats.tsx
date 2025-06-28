@@ -24,10 +24,10 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ user }) => (
         </View>
       </View>
       <View style={styles.statBlock}>
-        <Text style={styles.statNumber}>{user.stats?.investmentAccuracy}%</Text>
+        <Text style={styles.statNumber}>{user.stats?.supportAccuracy}%</Text>
         <Text style={styles.statLabel}>Accuracy</Text>
         <View style={styles.progressBarBg}>
-          <View style={[styles.progressBar, { width: `${Math.min((user.stats?.investmentAccuracy || 0) / 100, 1) * 100}%`, backgroundColor: Colors.main.accent }]} />
+          <View style={[styles.progressBar, { width: `${Math.min((user.stats?.supportAccuracy || 0) / 100, 1) * 100}%`, backgroundColor: Colors.main.accent }]} />
         </View>
       </View>
       <View style={styles.statBlock}>

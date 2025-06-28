@@ -7,7 +7,7 @@ export class User {
   stats?: {
     habitsCompleted: number;
     longestStreak: number;
-    investmentAccuracy: number;
+    supportAccuracy: number;
     habitCoinsEarned: number;
   };
   customizations?: {

@@ -6,8 +6,8 @@ export const EARNINGS = {
   medium: 25,
   hard: 50,
   streakBonuses: [0, 0.25, 0.5, 1, 1.5], // week 1-4, month 2
-  investmentReturns: { min: 5, max: 15 },
-  investmentLoss: { min: 3, max: 10 },
+  supportReturns: { min: 5, max: 15 },
+  supportLoss: { min: 3, max: 10 },
   streak30Bonus: 500,
 };
 
@@ -23,6 +23,6 @@ export const SPENDING = {
   vipBadge: 2500,
   streakInsurance: 500,
   doublePoints: 300,
-  investmentMultiplier: 800,
+  supportMultiplier: 800,
   comebackShield: 400,
 }; 

@@ -4,13 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard } from '../../components/GlassCard';
 import { AccentButton } from '../../components/AccentButton';
 import { HabitCard } from '../../components/HabitCard';
-import { InvestmentCard } from '../../components/InvestmentCard';
+import { SupportCard } from '../../components/SupportCard';
+import { SupportingCard } from '../../components/SupportingCard';
 import Colors from '../../constants/Colors';
 import Typography from '../../constants/Typography';
 import { HABITCOIN_SYMBOL } from '../../constants/Currency';
 import { User } from '../../models/User';
 import { Habit } from '../../models/Habit';
-import { Investment } from '../../models/Investment';
+import { Support } from '../../models/Support';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -25,26 +26,26 @@ const user = new User({
   name: 'Alex',
   profileImage: '',
   habitCoins: 2847.5,
-  stats: { habitsCompleted: 1247, longestStreak: 67, investmentAccuracy: 73, habitCoinsEarned: 12456 },
+  stats: { habitsCompleted: 1247, longestStreak: 67, supportAccuracy: 73, habitCoinsEarned: 12456 },
 });
 const habits = [
   new Habit({ title: 'Morning Run', currentPrice: 45, streakCount: 23, completedToday: true }),
   new Habit({ title: 'Book Read', currentPrice: 25, streakCount: 12, completedToday: false }),
   new Habit({ title: 'Meditation', currentPrice: 15, streakCount: 7, missedToday: true }),
 ];
-const investments = [
-  new Investment({ sharesOwned: 5, purchasePrice: 234 }),
-  new Investment({ sharesOwned: 3, purchasePrice: 189 }),
-  new Investment({ sharesOwned: 4, purchasePrice: 156 }),
+const supports = [
+  new Support({ purchasePrice: 234 }),
+  new Support({ purchasePrice: 189 }),
+  new Support({ purchasePrice: 156 }),
 ];
-const investmentMeta = [
-  { title: "Sarah's Gym", emoji: '💪', percent: 12.3, profit: 23.5, streak: 14 },
-  { title: "Mike's Coding", emoji: '💻', percent: 8.1, profit: 15.25, streak: 21 },
-  { title: "Lisa's Reading", emoji: '📚', percent: -3.2, profit: -8.5, streak: 9 },
+const supportMeta = [
+  { title: "Sarah", supporting: "Morning Run", profit: 23.5, streak: 14 },
+  { title: "Mike", supporting: "Meditation", profit: 15.25, streak: 21 },
+  { title: "Lisa", supporting: "You", profit: -8.5, streak: 9 },
 ];
 
-// Add mock data for top investors
-const topInvestors = [
+// Add mock data for top supporters
+const topSupporters = [
   { name: 'Sarah', avatar: require('../../assets/images/icon.png'), amount: 320 },
   { name: 'Mike', avatar: require('../../assets/images/icon.png'), amount: 210 },
   { name: 'Lisa', avatar: require('../../assets/images/icon.png'), amount: 150 },
@@ -60,6 +61,7 @@ function getInitialHabitState() {
       animatedFill: new Animated.Value(MIN_FILL),
       animatedColor: new Animated.Value(0),
       disabled: false,
+      previousFillLevel: 0, // Track previous fill level for undo
     },
     {
       ...habits[1],
@@ -68,6 +70,7 @@ function getInitialHabitState() {
       animatedFill: new Animated.Value((Math.floor(BOTTLE_SEGMENTS / 2) / BOTTLE_SEGMENTS)),
       animatedColor: new Animated.Value(0),
       disabled: false,
+      previousFillLevel: Math.floor(BOTTLE_SEGMENTS / 2), // Track previous fill level for undo
     },
     {
       ...habits[2],
@@ -76,6 +79,7 @@ function getInitialHabitState() {
       animatedFill: new Animated.Value(((BOTTLE_SEGMENTS - 1) / BOTTLE_SEGMENTS)),
       animatedColor: new Animated.Value(0),
       disabled: false,
+      previousFillLevel: BOTTLE_SEGMENTS - 1, // Track previous fill level for undo
     },
   ];
 }
@@ -92,14 +96,14 @@ export default function PortfolioScreen() {
   // Track myHabitsValue and todayPnl
   const [myHabitsValue, setMyHabitsValue] = useState(() => habitList.reduce((sum, h) => sum + (h.completedToday ? (h.currentPrice || 0) : 0), 0));
   const [todayPnl, setTodayPnl] = useState(0);
-  // For demo, static investments value
-  const investmentsValue = 1000.25;
+  // For demo, static support value
+  const supportValue = 1000.25;
 
   // Add animated values for portfolio, myHabits, and todayPnl
-  const animatedPortfolio = useRef(new Animated.Value(myHabitsValue + investmentsValue)).current;
+  const animatedPortfolio = useRef(new Animated.Value(myHabitsValue + supportValue)).current;
   const animatedMyHabits = useRef(new Animated.Value(myHabitsValue)).current;
   const animatedPnl = useRef(new Animated.Value(todayPnl)).current;
-  const [displayPortfolio, setDisplayPortfolio] = useState(myHabitsValue + investmentsValue);
+  const [displayPortfolio, setDisplayPortfolio] = useState(myHabitsValue + supportValue);
   const [displayMyHabits, setDisplayMyHabits] = useState(myHabitsValue);
   const [displayPnl, setDisplayPnl] = useState(todayPnl);
 
@@ -120,22 +124,22 @@ export default function PortfolioScreen() {
   // Animate values on change
   useEffect(() => {
     Animated.timing(animatedPortfolio, {
-      toValue: myHabitsValue + investmentsValue,
-      duration: 600,
+      toValue: myHabitsValue + supportValue,
+      duration: 300,
       useNativeDriver: false,
     }).start();
-  }, [myHabitsValue, investmentsValue]);
+  }, [myHabitsValue, supportValue]);
   useEffect(() => {
     Animated.timing(animatedMyHabits, {
       toValue: myHabitsValue,
-      duration: 600,
+      duration: 300,
       useNativeDriver: false,
     }).start();
   }, [myHabitsValue]);
   useEffect(() => {
     Animated.timing(animatedPnl, {
       toValue: todayPnl,
-      duration: 600,
+      duration: 300,
       useNativeDriver: false,
     }).start();
   }, [todayPnl]);
@@ -158,12 +162,12 @@ export default function PortfolioScreen() {
     if (fillLevel === 0) toFill = MIN_FILL;
     Animated.timing(habitList[i].animatedFill, {
       toValue: toFill,
-      duration: 400,
+      duration: 200,
       useNativeDriver: false,
     }).start();
     Animated.timing(habitList[i].animatedColor, {
       toValue: completed ? 1 : 0,
-      duration: 400,
+      duration: 200,
       useNativeDriver: false,
     }).start();
   };
@@ -185,135 +189,74 @@ export default function PortfolioScreen() {
           let newCompleted = habit.completedToday;
           let newStreak = habit.streakCount || 0;
           const updated = [...prev];
+          
           if (!habit.completedToday) {
-            // Mark as complete for today
-            newFill = Math.min(habit.fillLevel + 1, BOTTLE_SEGMENTS);
+            // Mark as complete for today - always fill completely
+            newFill = BOTTLE_SEGMENTS; // Fill completely
             newCompleted = true;
             newStreak = newStreak + 1;
             // Update values
             setMyHabitsValue(v => v + (habit.currentPrice || 0));
             setTodayPnl(p => p + (habit.currentPrice || 0));
-            if (newFill === BOTTLE_SEGMENTS) {
-              Animated.timing(habit.animatedFill, {
-                toValue: 1,
-                duration: 400,
-                useNativeDriver: false,
-              }).start(() => {
-                setTimeout(() => {
-                  setHabitList(prev2 => {
-                    const updated2 = [...prev2];
-                    updated2[i] = {
-                      ...updated2[i],
-                      fillLevel: 0,
-                      completedToday: true,
-                      streakCount: (updated2[i].streakCount || 0) + 1,
-                    };
-                    // Animate to min fill and keep green (completed)
-                    Animated.timing(updated2[i].animatedFill, {
-                      toValue: MIN_FILL,
-                      duration: 400,
-                      useNativeDriver: false,
-                    }).start();
-                    Animated.timing(updated2[i].animatedColor, {
-                      toValue: 1,
-                      duration: 400,
-                      useNativeDriver: false,
-                    }).start();
-                    setTimeout(() => {
-                      setHabitList(prev3 => {
-                        const updated3 = [...prev3];
-                        updated3[i] = { ...updated3[i], disabled: false };
-                        return updated3;
-                      });
-                      resolve();
-                    }, 600);
-                    return updated2;
-                  });
-                }, 200);
-              });
-              return updated;
-            } else {
-              Animated.timing(habit.animatedFill, {
-                toValue: newFill / BOTTLE_SEGMENTS,
-                duration: 400,
-                useNativeDriver: false,
-              }).start(() => {
-                setTimeout(() => {
-                  setHabitList(prev2 => {
-                    const updated2 = [...prev2];
-                    updated2[i] = { ...updated2[i], disabled: false };
-                    return updated2;
-                  });
-                  resolve();
-                }, 200);
-              });
-              Animated.timing(habit.animatedColor, {
-                toValue: 1,
-                duration: 400,
-                useNativeDriver: false,
-              }).start();
-            }
+            
+            // Animate to full fill and green color
+            Animated.timing(habit.animatedFill, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: false,
+            }).start(() => {
+              setTimeout(() => {
+                setHabitList(prev2 => {
+                  const updated2 = [...prev2];
+                  updated2[i] = { ...updated2[i], disabled: false };
+                  return updated2;
+                });
+                resolve();
+              }, 100);
+            });
+            Animated.timing(habit.animatedColor, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: false,
+            }).start();
           } else {
-            // Uncheck for today
-            if (habit.fillLevel === 0 && habit.completedToday && (habit.streakCount || 0) > 0) {
-              newFill = BOTTLE_SEGMENTS - 1;
-              newCompleted = false;
-              newStreak = Math.max((habit.streakCount || 0) - 1, 0);
-              // Update values
-              setMyHabitsValue(v => v - (habit.currentPrice || 0));
-              setTodayPnl(p => p - (habit.currentPrice || 0));
-              Animated.timing(habit.animatedFill, {
-                toValue: (BOTTLE_SEGMENTS - 1) / BOTTLE_SEGMENTS,
-                duration: 400,
-                useNativeDriver: false,
-              }).start(() => {
-                setTimeout(() => {
-                  setHabitList(prev2 => {
-                    const updated2 = [...prev2];
-                    updated2[i] = { ...updated2[i], disabled: false };
-                    return updated2;
-                  });
-                  resolve();
-                }, 200);
-              });
-              Animated.timing(habit.animatedColor, {
-                toValue: 0,
-                duration: 400,
-                useNativeDriver: false,
-              }).start();
-            } else {
-              newFill = Math.max(habit.fillLevel - 1, 0);
-              newCompleted = false;
-              newStreak = Math.max(newStreak - 1, 0);
-              // Update values
-              setMyHabitsValue(v => v - (habit.currentPrice || 0));
-              setTodayPnl(p => p - (habit.currentPrice || 0));
-              Animated.timing(habit.animatedFill, {
-                toValue: newFill === 0 ? MIN_FILL : newFill / BOTTLE_SEGMENTS,
-                duration: 400,
-                useNativeDriver: false,
-              }).start(() => {
-                setTimeout(() => {
-                  setHabitList(prev2 => {
-                    const updated2 = [...prev2];
-                    updated2[i] = { ...updated2[i], disabled: false };
-                    return updated2;
-                  });
-                  resolve();
-                }, 200);
-              });
-              Animated.timing(habit.animatedColor, {
-                toValue: 0,
-                duration: 400,
-                useNativeDriver: false,
-              }).start();
-            }
+            // Uncheck for today - return to previous fill level
+            newFill = habit.previousFillLevel || 0;
+            newCompleted = false;
+            newStreak = Math.max((habit.streakCount || 0) - 1, 0);
+            // Update values
+            setMyHabitsValue(v => v - (habit.currentPrice || 0));
+            setTodayPnl(p => p - (habit.currentPrice || 0));
+            
+            // Animate back to previous fill level
+            const targetFill = newFill === 0 ? MIN_FILL : newFill / BOTTLE_SEGMENTS;
+            Animated.timing(habit.animatedFill, {
+              toValue: targetFill,
+              duration: 200,
+              useNativeDriver: false,
+            }).start(() => {
+              setTimeout(() => {
+                setHabitList(prev2 => {
+                  const updated2 = [...prev2];
+                  updated2[i] = { ...updated2[i], disabled: false };
+                  return updated2;
+                });
+                resolve();
+              }, 100);
+            });
+            Animated.timing(habit.animatedColor, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: false,
+            }).start();
           }
+          
           updated[i] = {
             ...updated[i],
             fillLevel: newFill,
             completedToday: newCompleted,
             streakCount: newStreak,
+            previousFillLevel: habit.previousFillLevel, // Preserve previous fill level
           };
           return updated;
         });
@@ -354,7 +297,7 @@ export default function PortfolioScreen() {
               My Habits{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{displayMyHabits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
             </Text>
             <Text style={[styles.pieStat, { color: Colors.main.background }]}>
-              Investments{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{investmentsValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+              Support{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{supportValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
             </Text>
           </View>
         </View>
@@ -373,20 +316,20 @@ export default function PortfolioScreen() {
               if (habit.completedToday) {
                 // Animate streak pop (scale up)
                 Animated.sequence([
-                  Animated.timing(streakAnim, { toValue: 1.3, duration: 180, useNativeDriver: true }),
-                  Animated.timing(streakAnim, { toValue: 1, duration: 180, useNativeDriver: true }),
+                  Animated.timing(streakAnim, { toValue: 1.3, duration: 100, useNativeDriver: true }),
+                  Animated.timing(streakAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
                 ]).start();
                 // Show and animate currency pop-up
                 setShowCurrency(true);
                 currencyAnim.setValue(0);
-                Animated.timing(currencyAnim, { toValue: 1, duration: 700, useNativeDriver: true }).start(() => {
+                Animated.timing(currencyAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start(() => {
                   setShowCurrency(false);
                 });
               } else {
                 // Animate streak shrink (scale down)
                 Animated.sequence([
-                  Animated.timing(streakAnim, { toValue: 0.7, duration: 180, useNativeDriver: true }),
-                  Animated.timing(streakAnim, { toValue: 1, duration: 180, useNativeDriver: true }),
+                  Animated.timing(streakAnim, { toValue: 0.7, duration: 100, useNativeDriver: true }),
+                  Animated.timing(streakAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
                 ]).start();
               }
             }, [habit.completedToday]);
@@ -464,44 +407,38 @@ export default function PortfolioScreen() {
             );
           })}
         </View>
-        {/* Top Investors Section (neutral card) */}
+        {/* Top Supporters Section (neutral card) */}
         <View style={{ paddingHorizontal: 12, marginBottom: 8 }}>
           <GlassCard style={{ backgroundColor: Colors.main.surface }}>
             <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>TOP INVESTORS</Text>
+              <Text style={styles.sectionTitle}>SUPPORTERS</Text>
               <Text style={styles.sectionLink} onPress={() => router.push('/social')}>View All →</Text>
             </View>
-            <View style={{ height: 8 }} />
-            {topInvestors.map((inv, i) => {
-              const isGain = inv.amount >= 0;
-              return (
-                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.main.accent, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-                    <Image source={inv.avatar} style={{ width: 32, height: 32, borderRadius: 16 }} />
-                  </View>
-                  <Text style={{ flex: 1, color: Colors.main.textPrimary, fontWeight: 'bold' }}>{inv.name}</Text>
-                  <Text style={{ color: isGain ? Colors.main.accent : Colors.main.textSecondary, fontWeight: 'bold' }}>
-                    {HABITCOIN_SYMBOL}{Math.abs(inv.amount)} {isGain ? '▲' : '▼'}
-                  </Text>
-                </View>
-              );
-            })}
+            {supports.map((inv, i) => (
+              <SupportCard
+                key={i}
+                investment={inv}
+                habitTitle={supportMeta[i]?.title}
+                supporting={supportMeta[i]?.supporting}
+                profit={supportMeta[i]?.profit}
+              />
+            ))}
           </GlassCard>
         </View>
-        {/* Investments Section (neutral card) */}
+        {/* Support Section (neutral card) */}
         <View style={{ paddingHorizontal: 12 }}>
           <GlassCard style={{ backgroundColor: Colors.main.surface }}>
             <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>TOP INVESTMENTS</Text>
+              <Text style={styles.sectionTitle}>SUPPORTING</Text>
               <Text style={styles.sectionLink} onPress={() => router.push('/market')}>View All →</Text>
             </View>
-            {investments.map((inv, i) => (
-              <InvestmentCard
+            <View style={{ height: 8 }} />
+            {topSupporters.map((supporter, i) => (
+              <SupportingCard
                 key={i}
-                investment={inv}
-                habitTitle={investmentMeta[i]?.title}
-                profit={investmentMeta[i]?.profit}
-                percent={investmentMeta[i]?.percent}
+                name={supporter.name}
+                avatar={supporter.avatar}
+                amount={supporter.amount}
               />
             ))}
           </GlassCard>

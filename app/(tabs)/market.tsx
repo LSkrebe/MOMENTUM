@@ -19,9 +19,9 @@ export default function MarketScreen() {
       <Text>Tom's Writing: Ⱨ45 (+12%) [BUY] [WATCH]</Text>
       <Text style={styles.header}>Discover Users</Text>
       <Text>Top performers this month</Text>
-      <Text>New users to invest in</Text>
+      <Text>New users to support</Text>
       <Text>Recommended based on your interests</Text>
-      <Text style={styles.header}>Investment Opportunities</Text>
+      <Text style={styles.header}>Support Opportunities</Text>
       <Text>Undervalued habits ready to moon</Text>
       <Text>Consistent performers (safe bets)</Text>
       <Text>High-risk, high-reward streaks</Text>
