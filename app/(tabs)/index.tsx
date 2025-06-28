@@ -44,8 +44,8 @@ const supportMeta = [
   { title: "Lisa", supporting: "You", profit: -8.5, streak: 9 },
 ];
 
-// Add mock data for top supporters
-const topSupporters = [
+// People you're supporting (SUPPORTING card)
+const peopleYouSupport = [
   { name: 'Sarah', avatar: require('../../assets/images/icon.png'), amount: 320 },
   { name: 'Mike', avatar: require('../../assets/images/icon.png'), amount: 210 },
   { name: 'Lisa', avatar: require('../../assets/images/icon.png'), amount: 150 },
@@ -98,6 +98,13 @@ export default function PortfolioScreen() {
   const [todayPnl, setTodayPnl] = useState(0);
   // For demo, static support value
   const supportValue = 1000.25;
+
+  // Add supporters state that tracks which habits they support
+  const [supporters, setSupporters] = useState([
+    { name: 'Sarah', avatar: require('../../assets/images/icon.png'), purchasePrice: 234, currentValue: 320, supportingHabit: 'Morning Run' },
+    { name: 'Mike', avatar: require('../../assets/images/icon.png'), purchasePrice: 189, currentValue: 210, supportingHabit: 'Meditation' },
+    { name: 'Lisa', avatar: require('../../assets/images/icon.png'), purchasePrice: 156, currentValue: 150, supportingHabit: 'You' },
+  ]);
 
   // Add animated values for portfolio, myHabits, and todayPnl
   const animatedPortfolio = useRef(new Animated.Value(myHabitsValue + supportValue)).current;
@@ -199,6 +206,21 @@ export default function PortfolioScreen() {
             setMyHabitsValue(v => v + (habit.currentPrice || 0));
             setTodayPnl(p => p + (habit.currentPrice || 0));
             
+            // Update supporters who are supporting this habit
+            setSupporters(prevSupporters => 
+              prevSupporters.map(supporter => {
+                if (supporter.supportingHabit === habit.title || supporter.supportingHabit === 'You') {
+                  // Give supporters a bonus when the habit they support is completed
+                  const bonus = Math.floor((habit.currentPrice || 0) * 0.1); // 10% bonus
+                  return {
+                    ...supporter,
+                    currentValue: supporter.currentValue + bonus
+                  };
+                }
+                return supporter;
+              })
+            );
+            
             // Animate to full fill and green color
             Animated.timing(habit.animatedFill, {
               toValue: 1,
@@ -227,6 +249,20 @@ export default function PortfolioScreen() {
             // Update values
             setMyHabitsValue(v => v - (habit.currentPrice || 0));
             setTodayPnl(p => p - (habit.currentPrice || 0));
+            
+            // Remove bonus from supporters when habit is unchecked
+            setSupporters(prevSupporters => 
+              prevSupporters.map(supporter => {
+                if (supporter.supportingHabit === habit.title || supporter.supportingHabit === 'You') {
+                  const bonus = Math.floor((habit.currentPrice || 0) * 0.1); // 10% bonus
+                  return {
+                    ...supporter,
+                    currentValue: Math.max(0, supporter.currentValue - bonus) // Don't go below 0
+                  };
+                }
+                return supporter;
+              })
+            );
             
             // Animate back to previous fill level
             const targetFill = newFill === 0 ? MIN_FILL : newFill / BOTTLE_SEGMENTS;
@@ -280,18 +316,33 @@ export default function PortfolioScreen() {
             {/* Logo icon on the left, no border or extra styling */}
             <Image source={user.profileImage ? { uri: user.profileImage } : require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
             {/* Centered title */}
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>MOMENTUM</Text>
             </View>
-            {/* Empty view for symmetry */}
-            <View style={{ width: 32, height: 32 }} />
+            {/* Gain text on the right */}
+            {displayPnl !== 0 && (
+              <Text style={{ 
+                width: 40, 
+                height: 32, 
+                fontSize: 10, 
+                fontWeight: 'normal',
+                color: Colors.main.background,
+                textAlign: 'center',
+                textAlignVertical: 'center',
+                lineHeight: 32
+              }}>
+                {displayPnl >= 0 ? '+' : ''}{Math.abs(displayPnl) >= 100 ? Math.round(displayPnl) : displayPnl.toFixed(2)}
+              </Text>
+            )}
+            {displayPnl === 0 && (
+              <View style={{ width: 40, height: 32 }} />
+            )}
           </View>
-          <Text style={[styles.portfolioValue, { color: Colors.main.background }]}> 
-            {HABITCOIN_SYMBOL} {displayPortfolio.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </Text>
-          <Text style={{ color: Colors.main.background, fontSize: 18, fontWeight: 'normal', textAlign: 'center', marginBottom: 2 }}>
-            Today {displayPnl >= 0 ? '+' : ''}{displayPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </Text>
+          <View style={{ position: 'relative' }}>
+            <Text style={[styles.portfolioValue, { color: Colors.main.background }]}> 
+              {HABITCOIN_SYMBOL}{displayPortfolio.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Text>
+          </View>
           <View style={styles.pieRow}>
             <Text style={[styles.pieStat, { color: Colors.main.background }]}>
               My Habits{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{displayMyHabits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
@@ -414,13 +465,14 @@ export default function PortfolioScreen() {
               <Text style={styles.sectionTitle}>SUPPORTERS</Text>
               <Text style={styles.sectionLink} onPress={() => router.push('/social')}>View All →</Text>
             </View>
-            {supports.map((inv, i) => (
+            {supporters.map((supporter, i) => (
               <SupportCard
                 key={i}
-                investment={inv}
-                habitTitle={supportMeta[i]?.title}
-                supporting={supportMeta[i]?.supporting}
-                profit={supportMeta[i]?.profit}
+                investment={null}
+                habitTitle={supporter.name}
+                supporting={supporter.supportingHabit}
+                profit={supporter.currentValue - supporter.purchasePrice}
+                purchasePrice={supporter.purchasePrice}
               />
             ))}
           </GlassCard>
@@ -433,7 +485,7 @@ export default function PortfolioScreen() {
               <Text style={styles.sectionLink} onPress={() => router.push('/market')}>View All →</Text>
             </View>
             <View style={{ height: 8 }} />
-            {topSupporters.map((supporter, i) => (
+            {peopleYouSupport.map((supporter, i) => (
               <SupportingCard
                 key={i}
                 name={supporter.name}

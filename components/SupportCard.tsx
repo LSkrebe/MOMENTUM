@@ -1,20 +1,41 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Support } from '../models/Support';
 import Colors from '../constants/Colors';
 import { HABITCOIN_SYMBOL } from '../constants/Currency';
 
 interface SupportCardProps {
-  investment: Support;
+  investment?: any;
   habitTitle: string;
   supporting: string;
   profit: number;
+  purchasePrice: number;
 }
 
-export const SupportCard: React.FC<SupportCardProps> = ({ investment, habitTitle, supporting, profit }) => {
+export const SupportCard = ({ investment, habitTitle, supporting, profit, purchasePrice }: SupportCardProps) => {
   const isGain = profit >= 0;
   const chart = isGain ? ['/', '/', '/'] : ['\\', '\\', '\\'];
-  
+  const value = investment?.currentValue ?? purchasePrice + profit;
+
+  // Animated value logic
+  const animatedValue = useRef(new Animated.Value(value)).current;
+  const [displayValue, setDisplayValue] = useState(value);
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: value,
+      duration: 700,
+      useNativeDriver: false,
+    }).start();
+  }, [value]);
+
+  useEffect(() => {
+    const listener = animatedValue.addListener(({ value }) => {
+      setDisplayValue(value);
+    });
+    return () => animatedValue.removeListener(listener);
+  }, [animatedValue]);
+
   return (
     <View style={styles.card}>
       <View style={styles.row}>
@@ -22,7 +43,7 @@ export const SupportCard: React.FC<SupportCardProps> = ({ investment, habitTitle
         <Text style={[styles.percent, { color: isGain ? Colors.main.accent : Colors.main.textSecondary }]}> {HABITCOIN_SYMBOL}{Math.abs(profit)} {isGain ? '▲' : '▼'}</Text>
       </View>
       <View style={styles.row}>
-        <Text style={styles.value}>{HABITCOIN_SYMBOL}{investment.purchasePrice}</Text>
+        <Text style={styles.value}>{HABITCOIN_SYMBOL}{displayValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
       </View>
       <Text style={styles.shares}>{supporting}</Text>
       <View style={styles.chartWrap} pointerEvents="none">
@@ -79,4 +100,9 @@ const styles = StyleSheet.create({
   },
   chartWrap: { position: 'absolute', right: 12, bottom: 10, flexDirection: 'row', alignItems: 'flex-end' },
   chartLine: { fontSize: 18, marginLeft: 1, marginRight: 1, fontWeight: 'bold' },
+  purchasePrice: {
+    fontSize: 14,
+    color: Colors.main.textPrimary,
+    marginTop: 2,
+  },
 }); 
