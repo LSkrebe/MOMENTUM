@@ -7,25 +7,32 @@ import Typography from '../../constants/Typography';
 import { HABITCOIN_SYMBOL } from '../../constants/Currency';
 
 // Mock shop data
-const profileCustomization = [
-  { id: 1, name: 'Galaxy Theme', price: 1500, description: 'Cosmic background with stars', category: 'themes' },
-  { id: 2, name: 'Elite Title', price: 2000, description: 'Prestigious title for top performers', category: 'titles' },
-  { id: 3, name: 'Animated Border', price: 3000, description: 'Dynamic border effects', category: 'borders' },
-  { id: 4, name: 'Neon City', price: 1000, description: 'Urban cyberpunk theme', category: 'themes' },
+const investmentTools = [
+  { id: 1, name: 'Portfolio Analytics', price: 800, description: 'Advanced insights into your support investments', category: 'analytics' },
+  { id: 2, name: 'Risk Assessment', price: 500, description: 'AI-powered risk analysis for support opportunities', category: 'analytics' },
+  { id: 3, name: 'Auto-Invest', price: 1200, description: 'Automatically invest in high-performing habits', category: 'automation' },
+  { id: 4, name: 'Diversification Guide', price: 300, description: 'Learn optimal support portfolio strategies', category: 'education' },
 ];
 
-const powerUps = [
-  { id: 5, name: 'Streak Insurance', price: 500, description: 'Protect your streak from breaking', category: 'insurance' },
-  { id: 6, name: 'Double XP', price: 300, description: '2x coins for 24 hours', category: 'boosts' },
-  { id: 7, name: 'Comeback Shield', price: 400, description: 'Recover from missed days', category: 'insurance' },
-  { id: 8, name: 'Habit Multiplier', price: 800, description: 'Increase habit coin rewards', category: 'boosts' },
+const socialEnhancements = [
+  { id: 5, name: 'Featured Performer', price: 2500, description: 'Get featured on the trending tab for 7 days', category: 'status' },
+  { id: 6, name: 'Success Story Slot', price: 1800, description: 'Share your journey in the success stories section', category: 'status' },
+  { id: 7, name: 'Custom Title', price: 1000, description: 'Create your own unique performer title', category: 'customization' },
+  { id: 8, name: 'Profile Highlight', price: 750, description: 'Stand out with a glowing profile border', category: 'customization' },
 ];
 
-const socialStatus = [
-  { id: 9, name: 'VIP Badge', price: 2500, description: 'Exclusive VIP status', category: 'badges' },
-  { id: 10, name: 'Featured Spot', price: 1500, description: 'Get featured on leaderboards', category: 'features' },
-  { id: 11, name: 'Success Story', price: 3000, description: 'Share your journey', category: 'features' },
-  { id: 12, name: 'Leaderboard Highlight', price: 1500, description: 'Stand out on leaderboards', category: 'features' },
+const supportBoosters = [
+  { id: 9, name: 'Support Multiplier', price: 600, description: '2x support earnings for 24 hours', category: 'boosts' },
+  { id: 10, name: 'Streak Protection', price: 400, description: 'Protect your supported habits from breaking', category: 'insurance' },
+  { id: 11, name: 'Early Access', price: 900, description: 'Get first access to new support opportunities', category: 'access' },
+  { id: 12, name: 'Support Insurance', price: 350, description: 'Recover losses from failed support investments', category: 'insurance' },
+];
+
+const communityFeatures = [
+  { id: 13, name: 'Community Challenge', price: 1500, description: 'Create a 30-day challenge for the community', category: 'challenges' },
+  { id: 14, name: 'Mentorship Badge', price: 800, description: 'Become a verified mentor for new users', category: 'badges' },
+  { id: 15, name: 'Leaderboard Boost', price: 1200, description: 'Temporary boost to climb leaderboards faster', category: 'boosts' },
+  { id: 16, name: 'Exclusive Events', price: 2000, description: 'Access to premium community events', category: 'access' },
 ];
 
 export default function MarketScreen() {
@@ -103,18 +110,23 @@ export default function MarketScreen() {
         {/* Shop Sections */}
         <View style={{ paddingHorizontal: 12, marginTop: 18 }}>
           <ShopSection 
-            title="PROFILE CUSTOMIZATION" 
-            items={profileCustomization}
+            title="INVESTMENT TOOLS" 
+            items={investmentTools}
           />
           
           <ShopSection 
-            title="POWER-UPS & BOOSTS" 
-            items={powerUps}
+            title="SOCIAL ENHANCEMENTS" 
+            items={socialEnhancements}
           />
           
           <ShopSection 
-            title="SOCIAL STATUS" 
-            items={socialStatus}
+            title="SUPPORT BOOSTERS" 
+            items={supportBoosters}
+          />
+          
+          <ShopSection 
+            title="COMMUNITY FEATURES" 
+            items={communityFeatures}
           />
         </View>
       </ScrollView>
@@ -208,7 +220,9 @@ const styles = StyleSheet.create({
   itemDescription: {
     fontSize: 14,
     color: Colors.main.textSecondary,
-    lineHeight: 20,
+    lineHeight: 16,
+    flexWrap: 'wrap',
+    maxWidth: '75%',
   },
   disabledText: {
     color: Colors.main.textSecondary,
