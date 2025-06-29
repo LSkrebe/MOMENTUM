@@ -2,8 +2,6 @@ import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, Animated, Dimensions, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard } from '../../components/GlassCard';
-import { AccentButton } from '../../components/AccentButton';
-import { HabitCard } from '../../components/HabitCard';
 import { SupportCard } from '../../components/SupportCard';
 import { SupportingCard } from '../../components/SupportingCard';
 import Colors from '../../constants/Colors';
@@ -32,16 +30,6 @@ const habits = [
   new Habit({ title: 'Morning Run', currentPrice: 45, streakCount: 23, completedToday: true }),
   new Habit({ title: 'Book Read', currentPrice: 25, streakCount: 12, completedToday: false }),
   new Habit({ title: 'Meditation', currentPrice: 15, streakCount: 7, missedToday: true }),
-];
-const supports = [
-  new Support({ purchasePrice: 234 }),
-  new Support({ purchasePrice: 189 }),
-  new Support({ purchasePrice: 156 }),
-];
-const supportMeta = [
-  { title: "Sarah", supporting: "Morning Run", profit: 23.5, streak: 14 },
-  { title: "Mike", supporting: "Meditation", profit: 15.25, streak: 21 },
-  { title: "Lisa", supporting: "You", profit: -8.5, streak: 9 },
 ];
 
 // People you're supporting (SUPPORTING card)
@@ -86,7 +74,6 @@ function getInitialHabitState() {
 
 export default function PortfolioScreen() {
   const insets = useSafeAreaInsets();
-  const today = new Date();
   // Animated number for portfolio value
   const animatedValue = useRef(new Animated.Value(0)).current;
   const [displayCoins, setDisplayCoins] = useState(0);
@@ -162,22 +149,6 @@ export default function PortfolioScreen() {
       animatedPnl.removeListener(t);
     };
   }, []);
-
-  // Animate fill and color for a habit
-  const animateHabit = (i: number, fillLevel: number, completed: boolean) => {
-    let toFill = fillLevel / BOTTLE_SEGMENTS;
-    if (fillLevel === 0) toFill = MIN_FILL;
-    Animated.timing(habitList[i].animatedFill, {
-      toValue: toFill,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-    Animated.timing(habitList[i].animatedColor, {
-      toValue: completed ? 1 : 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  };
 
   // Handle bottle press
   const handleBottlePress = (i: number) => {
@@ -345,7 +316,7 @@ export default function PortfolioScreen() {
           </View>
           <View style={styles.pieRow}>
             <Text style={[styles.pieStat, { color: Colors.main.background }]}>
-              My Habits{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{displayMyHabits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+              Habits{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{displayMyHabits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
             </Text>
             <Text style={[styles.pieStat, { color: Colors.main.background }]}>
               Support{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{supportValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
@@ -463,7 +434,7 @@ export default function PortfolioScreen() {
           <GlassCard style={{ backgroundColor: Colors.main.surface }}>
             <View style={styles.sectionRow}>
               <Text style={styles.sectionTitle}>SUPPORTERS</Text>
-              <Text style={styles.sectionLink} onPress={() => router.push('/social')}>View All →</Text>
+              <Text style={styles.sectionLink} onPress={() => router.push('/social?tab=portfolio')}>View All →</Text>
             </View>
             {supporters.map((supporter, i) => (
               <SupportCard
@@ -482,7 +453,7 @@ export default function PortfolioScreen() {
           <GlassCard style={{ backgroundColor: Colors.main.surface }}>
             <View style={styles.sectionRow}>
               <Text style={styles.sectionTitle}>SUPPORTING</Text>
-              <Text style={styles.sectionLink} onPress={() => router.push('/market')}>View All →</Text>
+              <Text style={styles.sectionLink} onPress={() => router.push('/social?tab=portfolio')}>View All →</Text>
             </View>
             <View style={{ height: 8 }} />
             {peopleYouSupport.map((supporter, i) => (
@@ -524,21 +495,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  avatarWrap: {
-    borderWidth: 2,
-    borderColor: Colors.main.accentSoft,
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    overflow: 'hidden',
-    marginRight: 8,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.main.surface,
-  },
   headerTitle: {
     color: Colors.main.background,
     fontSize: 18,
@@ -553,12 +509,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     marginBottom: 2,
     textAlign: 'center',
-  },
-  portfolioSub: {
-    color: Colors.main.background,
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 6,
   },
   pieRow: {
     flexDirection: 'row',
@@ -587,11 +537,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 1,
-  },
-  sectionCount: {
-    color: Colors.main.textSecondary,
-    fontSize: 14,
-    fontWeight: 'bold',
   },
   sectionLink: {
     color: Colors.main.accent,
@@ -655,10 +600,5 @@ const bottleStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 2,
-  },
-  bottleReward: {
-    color: Colors.main.accent,
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });

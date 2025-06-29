@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { GlassCard } from '../../components/GlassCard';
 import Colors from '../../constants/Colors';
 import Typography from '../../constants/Typography';
@@ -98,6 +99,40 @@ const portfolioInvestments = [
   { name: 'Lisa Park', avatar: require('../../assets/images/icon.png'), habit: 'Meditation', invested: 150, currentValue: 120, profit: -30, profitPercent: -20.0 },
 ];
 
+// Mock data for portfolio supporters
+const portfolioSupporters = [
+  { 
+    name: 'Emma Wilson', 
+    avatar: require('../../assets/images/icon.png'), 
+    habit: 'Morning Run', 
+    supported: 150, 
+    currentValue: 180, 
+    profit: 30, 
+    profitPercent: 20.0,
+    supportDate: '2 weeks ago'
+  },
+  { 
+    name: 'James Thompson', 
+    avatar: require('../../assets/images/icon.png'), 
+    habit: 'Coding Practice', 
+    supported: 200, 
+    currentValue: 320, 
+    profit: 120, 
+    profitPercent: 60.0,
+    supportDate: '1 month ago'
+  },
+  { 
+    name: 'Anna Lee', 
+    avatar: require('../../assets/images/icon.png'), 
+    habit: 'Reading', 
+    supported: 80, 
+    currentValue: 95, 
+    profit: 15, 
+    profitPercent: 18.8,
+    supportDate: '3 weeks ago'
+  },
+];
+
 // Mock data for discover tab
 const featuredProfile = {
   name: 'Alex Thompson',
@@ -135,7 +170,8 @@ const leaderboardUsers = [
 
 export default function SocialScreen() {
   const insets = useSafeAreaInsets();
-  const [selectedTab, setSelectedTab] = useState('discover');
+  const params = useLocalSearchParams();
+  const [selectedTab, setSelectedTab] = useState(params.tab === 'portfolio' ? 'portfolio' : 'discover');
   const [userBalance] = useState(1085.25);
   
   // Animated values for portfolio stats - updated to match home tab
@@ -240,8 +276,35 @@ export default function SocialScreen() {
           </View>
         </View>
         <View style={styles.portfolioValues}>
-          <Text style={styles.portfolioInvested}>Invested: {HABITCOIN_SYMBOL}{investment.invested}</Text>
-          <Text style={styles.portfolioCurrent}>Current: {HABITCOIN_SYMBOL}{investment.currentValue}</Text>
+          <Text style={styles.portfolioInvested}>{HABITCOIN_SYMBOL}{investment.invested}</Text>
+          <Text style={styles.portfolioCurrent}>{HABITCOIN_SYMBOL}{investment.currentValue}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  const SupporterCard = ({ supporter }: { supporter: any }) => {
+    const isGain = supporter.profit >= 0;
+    
+    return (
+      <View style={styles.supporterCard}>
+        <View style={styles.supporterHeader}>
+          <View style={styles.supporterInfo}>
+            <Image source={supporter.avatar} style={styles.supporterAvatar} />
+            <View>
+              <Text style={styles.supporterName}>{supporter.name}</Text>
+              <Text style={styles.supporterHabit}>{supporter.habit}</Text>
+            </View>
+          </View>
+          <View style={styles.supporterProfitContainer}>
+            <Text style={[styles.supporterProfitAmount, { color: isGain ? Colors.main.accent : Colors.main.textSecondary }]}>
+              {HABITCOIN_SYMBOL}{Math.abs(supporter.profit)} {isGain ? '▲' : '▼'}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.supporterDetails}>
+          <Text style={styles.supporterDate}>{supporter.supportDate}</Text>
+          <Text style={styles.supporterCurrent}>{HABITCOIN_SYMBOL}{supporter.currentValue}</Text>
         </View>
       </View>
     );
@@ -268,7 +331,9 @@ export default function SocialScreen() {
   const FeaturedProfileCard = () => (
     <Pressable style={styles.featuredCard}>
       <View style={styles.featuredCenter}>
-        <Image source={featuredProfile.avatar} style={styles.featuredAvatar} />
+        <View style={styles.featuredAvatarContainer}>
+          <Image source={featuredProfile.avatar} style={styles.featuredAvatar} />
+        </View>
         <Text style={styles.featuredName}>{featuredProfile.name}</Text>
         <Text style={styles.featuredTitle}>{featuredProfile.title}</Text>
       </View>
@@ -293,7 +358,9 @@ export default function SocialScreen() {
   const SuccessStoryCard = () => (
     <Pressable style={styles.successCard}>
       <View style={styles.successHeader}>
-        <Image source={successStory.avatar} style={styles.successAvatar} />
+        <View style={styles.successAvatarContainer}>
+          <Image source={successStory.avatar} style={styles.successAvatar} />
+        </View>
         <View style={styles.successInfo}>
           <Text style={styles.successName}>{successStory.name}</Text>
           <Text style={styles.successHabit}>{successStory.habit}</Text>
@@ -431,7 +498,7 @@ export default function SocialScreen() {
                 <Text style={styles.sectionTitle}>PORTFOLIO OVERVIEW</Text>
                 <View style={styles.portfolioStats}>
                   <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>My Habits</Text>
+                    <Text style={styles.statLabel}>Habits</Text>
                     <Text style={styles.statValue}>{HABITCOIN_SYMBOL}{displayMyHabits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
                   </View>
                   <View style={styles.statItem}>
@@ -441,12 +508,22 @@ export default function SocialScreen() {
                 </View>
               </GlassCard>
 
-              {/* Your Investments */}
-              <GlassCard style={{ backgroundColor: Colors.main.surface }}>
-                <Text style={styles.sectionTitle}>YOUR INVESTMENTS</Text>
+              {/* Your Support */}
+              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
+                <Text style={styles.sectionTitle}>YOUR SUPPORT</Text>
                 <View style={{ gap: 12 }}>
                   {portfolioInvestments.map((investment, index) => (
                     <PortfolioCard key={index} investment={investment} />
+                  ))}
+                </View>
+              </GlassCard>
+
+              {/* Your Supporters */}
+              <GlassCard style={{ backgroundColor: Colors.main.surface }}>
+                <Text style={styles.sectionTitle}>YOUR SUPPORTERS</Text>
+                <View style={{ gap: 12 }}>
+                  {portfolioSupporters.map((supporter, index) => (
+                    <SupporterCard key={index} supporter={supporter} />
                   ))}
                 </View>
               </GlassCard>
@@ -801,11 +878,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  featuredAvatarContainer: {
+    backgroundColor: Colors.main.accent,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
   featuredAvatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    marginBottom: 12,
   },
   featuredName: {
     color: Colors.main.textPrimary,
@@ -869,11 +954,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  successAvatar: {
+  successAvatarContainer: {
+    backgroundColor: Colors.main.accent,
     width: 48,
     height: 48,
     borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 16,
+  },
+  successAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   successInfo: {
     flex: 1,
@@ -971,5 +1064,60 @@ const styles = StyleSheet.create({
     color: Colors.main.textPrimary,
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  supporterCard: {
+    backgroundColor: Colors.main.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.main.border,
+  },
+  supporterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  supporterInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  supporterAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  supporterName: {
+    color: Colors.main.textPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  supporterHabit: {
+    color: Colors.main.textSecondary,
+    fontSize: 14,
+    marginTop: 2,
+  },
+  supporterProfitContainer: {
+    alignItems: 'flex-end',
+  },
+  supporterProfitAmount: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  supporterDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  supporterDate: {
+    color: Colors.main.textSecondary,
+    fontSize: 12,
+  },
+  supporterCurrent: {
+    color: Colors.main.textPrimary,
+    fontSize: 12,
+    fontWeight: '600',
   },
 }); 
