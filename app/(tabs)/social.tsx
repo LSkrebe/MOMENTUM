@@ -1,172 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { GlassCard } from '../../components/GlassCard';
 import Colors from '../../constants/Colors';
 import Typography from '../../constants/Typography';
 import { HABITCOIN_SYMBOL } from '../../constants/Currency';
+import { User } from '../../models/User';
+import { Habit } from '../../models/Habit';
+import { Support } from '../../models/Support';
+import SocialManager from '../../models/SocialManager';
+import PortfolioManager from '../../models/PortfolioManager';
+import LeaderboardManager from '../../models/LeaderboardManager';
+import InvestmentCard from '../../components/InvestmentCard';
+import CategoryCard from '../../components/CategoryCard';
+import RecommendationCard from '../../components/RecommendationCard';
+import FeaturedProfileCard from '../../components/FeaturedProfileCard';
+import SuccessStoryCard from '../../components/SuccessStoryCard';
+import LeaderboardCard from '../../components/LeaderboardCard';
+import SearchCard from '../../components/SearchCard';
+import UserHabitCard from '../../components/UserHabitCard';
 
-// Mock data for investment opportunities
-const friendsHabits = [
-  {
-    id: 1,
-    name: 'Sarah Chen',
-    avatar: require('../../assets/images/icon.png'),
-    habit: 'Morning Run',
-    streak: 23,
-    currentPrice: 45,
-    purchasePrice: 32,
-    profit: 13,
-    riskLevel: 'Low',
-    category: 'Fitness',
-    supporters: 156,
-    trend: 'up',
-  },
-  {
-    id: 2,
-    name: 'Mike Rodriguez',
-    avatar: require('../../assets/images/icon.png'),
-    habit: 'Coding Practice',
-    streak: 67,
-    currentPrice: 89,
-    purchasePrice: 45,
-    profit: 44,
-    riskLevel: 'Medium',
-    category: 'Learning',
-    supporters: 234,
-    trend: 'up',
-  },
-  {
-    id: 3,
-    name: 'Lisa Park',
-    avatar: require('../../assets/images/icon.png'),
-    habit: 'Meditation',
-    streak: 12,
-    currentPrice: 28,
-    purchasePrice: 35,
-    profit: -7,
-    riskLevel: 'High',
-    category: 'Wellness',
-    supporters: 89,
-    trend: 'down',
-  },
-  {
-    id: 4,
-    name: 'David Kim',
-    avatar: require('../../assets/images/icon.png'),
-    habit: 'Reading',
-    streak: 45,
-    currentPrice: 67,
-    purchasePrice: 52,
-    profit: 15,
-    riskLevel: 'Low',
-    category: 'Learning',
-    supporters: 198,
-    trend: 'up',
-  },
-];
-
-const trendingCategories = [
-  { name: 'Fitness', trend: '+12.5%', color: '#4CAF50' },
-  { name: 'Learning', trend: '+8.3%', color: '#2196F3' },
-  { name: 'Wellness', trend: '+15.2%', color: '#9C27B0' },
-  { name: 'Productivity', trend: '+6.7%', color: '#FF9800' },
-];
-
-const recommendations = [
-  {
-    id: 5,
-    name: 'Emma Wilson',
-    avatar: require('../../assets/images/icon.png'),
-    habit: 'Language Learning',
-    reason: 'Consistent 30+ day streaks',
-    category: 'Learning',
-  },
-  {
-    id: 6,
-    name: 'James Thompson',
-    avatar: require('../../assets/images/icon.png'),
-    habit: 'Weight Training',
-    reason: 'Steady progress pattern',
-    category: 'Fitness',
-  },
-];
-
-const portfolioInvestments = [
-  { name: 'Sarah Chen', avatar: require('../../assets/images/icon.png'), habit: 'Morning Run', invested: 320, currentValue: 450, profit: 130, profitPercent: 40.6 },
-  { name: 'Mike Rodriguez', avatar: require('../../assets/images/icon.png'), habit: 'Coding Practice', invested: 210, currentValue: 415, profit: 205, profitPercent: 97.6 },
-  { name: 'Lisa Park', avatar: require('../../assets/images/icon.png'), habit: 'Meditation', invested: 150, currentValue: 120, profit: -30, profitPercent: -20.0 },
-];
-
-// Mock data for portfolio supporters
-const portfolioSupporters = [
-  { 
-    name: 'Emma Wilson', 
-    avatar: require('../../assets/images/icon.png'), 
-    habit: 'Morning Run', 
-    supported: 150, 
-    currentValue: 180, 
-    profit: 30, 
-    profitPercent: 20.0,
-    supportDate: '2 weeks ago'
-  },
-  { 
-    name: 'James Thompson', 
-    avatar: require('../../assets/images/icon.png'), 
-    habit: 'Coding Practice', 
-    supported: 200, 
-    currentValue: 320, 
-    profit: 120, 
-    profitPercent: 60.0,
-    supportDate: '1 month ago'
-  },
-  { 
-    name: 'Anna Lee', 
-    avatar: require('../../assets/images/icon.png'), 
-    habit: 'Reading', 
-    supported: 80, 
-    currentValue: 95, 
-    profit: 15, 
-    profitPercent: 18.8,
-    supportDate: '3 weeks ago'
-  },
-];
-
-// Mock data for discover tab
-const featuredProfile = {
-  name: 'Alex Thompson',
-  avatar: require('../../assets/images/icon.png'),
-  title: 'Elite Performer',
-  totalValue: 15420,
-  streak: 156,
-  supporters: 892,
-  description: 'Top habit performer this month with incredible consistency across multiple categories.',
-};
-
-const successStory = {
-  name: 'Maria Rodriguez',
-  avatar: require('../../assets/images/icon.png'),
-  habit: 'Daily Meditation',
-  streak: 100,
-  totalEarned: 3240,
-  story: "I never thought I could maintain a meditation practice for 100 days straight. The support from this community kept me going through the toughest days. Now I can't imagine my life without this daily ritual. Thank you to everyone who believed in me!",
-  supporters: 234,
-  currentValue: 89,
-};
-
-const leaderboardUsers = [
-  { name: 'Alex Thompson', avatar: require('../../assets/images/icon.png'), totalValue: 15420, rank: 1, title: 'Elite Supporter' },
-  { name: 'Sarah Chen', avatar: require('../../assets/images/icon.png'), totalValue: 12890, rank: 2, title: 'Habit Master' },
-  { name: 'Mike Rodriguez', avatar: require('../../assets/images/icon.png'), totalValue: 11230, rank: 3, title: 'Consistency King' },
-  { name: 'Emma Wilson', avatar: require('../../assets/images/icon.png'), totalValue: 9870, rank: 4, title: 'Wellness Warrior' },
-  { name: 'David Kim', avatar: require('../../assets/images/icon.png'), totalValue: 8450, rank: 5, title: 'Learning Legend' },
-  { name: 'Lisa Park', avatar: require('../../assets/images/icon.png'), totalValue: 7230, rank: 6, title: 'Fitness Fanatic' },
-  { name: 'James Thompson', avatar: require('../../assets/images/icon.png'), totalValue: 6540, rank: 7, title: 'Productivity Pro' },
-  { name: 'Maria Rodriguez', avatar: require('../../assets/images/icon.png'), totalValue: 5980, rank: 8, title: 'Meditation Master' },
-  { name: 'Chris Johnson', avatar: require('../../assets/images/icon.png'), totalValue: 5420, rank: 9, title: 'Streak Seeker' },
-  { name: 'Anna Lee', avatar: require('../../assets/images/icon.png'), totalValue: 4870, rank: 10, title: 'Goal Getter' },
-];
+// Helper to ensure image source is always ImageSourcePropType
+function getImageSource(img: any): ImageSourcePropType {
+  if (typeof img === 'number') return img;
+  if (typeof img === 'string') return require('../../assets/images/icon.png');
+  return require('../../assets/images/icon.png');
+}
 
 export default function SocialScreen() {
   const insets = useSafeAreaInsets();
@@ -174,6 +34,11 @@ export default function SocialScreen() {
   const [selectedTab, setSelectedTab] = useState(params.tab === 'portfolio' ? 'portfolio' : 'discover');
   const [userBalance] = useState(1085.25);
   
+  // Instantiate managers
+  const socialManager = new SocialManager();
+  const portfolioManager = new PortfolioManager(socialManager.getFriends(), socialManager.getFriendHabits());
+  const leaderboardManager = new LeaderboardManager();
+
   // Animated values for portfolio stats - updated to match home tab
   const animatedMyHabits = useRef(new Animated.Value(450)).current;
   const animatedSupportValue = useRef(new Animated.Value(535)).current;
@@ -189,72 +54,15 @@ export default function SocialScreen() {
     };
   }, []);
 
-  const handleSupport = (habit: any) => {
+  const handleSupport = (habit: Habit | User) => {
     // TODO: Implement support logic
-    console.log('Supporting:', habit.name, habit.habit);
+    if (habit instanceof Habit) {
+      const user = socialManager.getFriends().find(u => u.id === habit.userId);
+      console.log('Supporting:', user?.name, habit.title);
+    } else if (habit instanceof User) {
+      console.log('Supporting user:', habit.name);
+    }
   };
-
-  const InvestmentCard = ({ habit }: { habit: any }) => {
-    const isGain = habit.profit >= 0;
-    
-    return (
-      <Pressable style={styles.investmentCard} onPress={() => handleSupport(habit)}>
-        <View style={styles.investmentHeader}>
-          <View style={styles.investorInfo}>
-            <Image source={habit.avatar} style={styles.avatar} />
-            <View>
-              <Text style={styles.investorName}>{habit.name}</Text>
-              <Text style={styles.habitTitle}>{habit.habit}</Text>
-            </View>
-          </View>
-          <View style={styles.priceInfo}>
-            <Text style={[styles.profitText, { color: isGain ? Colors.main.accent : Colors.main.textSecondary }]}>
-              {HABITCOIN_SYMBOL}{Math.abs(habit.profit)} {isGain ? '▲' : '▼'}
-            </Text>
-          </View>
-        </View>
-        
-        <View style={styles.investmentDetails}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Streak</Text>
-            <Text style={styles.detailValue}>{habit.streak} days</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Supporters</Text>
-            <Text style={styles.detailValue}>{habit.supporters}</Text>
-          </View>
-        </View>
-      </Pressable>
-    );
-  };
-
-  const CategoryCard = ({ category }: { category: any }) => (
-    <Pressable style={styles.categoryCard}>
-      <Text style={styles.categoryName}>{category.name}</Text>
-      <Text style={[styles.categoryTrend, { color: Colors.main.accent }]}>{category.trend}</Text>
-    </Pressable>
-  );
-
-  const RecommendationCard = ({ recommendation }: { recommendation: any }) => (
-    <Pressable style={styles.recommendationCard} onPress={() => handleSupport(recommendation)}>
-      <View style={styles.recommendationHeader}>
-        <View style={styles.recommendationLeftContent}>
-          <Image source={recommendation.avatar} style={styles.recommendationAvatar} />
-          <View>
-            <Text style={styles.recommendationName}>{recommendation.name}</Text>
-            <Text style={styles.recommendationHabit}>{recommendation.habit}</Text>
-            <Text style={styles.recommendationReason}>{recommendation.reason}</Text>
-          </View>
-        </View>
-      </View>
-    </Pressable>
-  );
-
-  const SearchCard = () => (
-    <View style={styles.searchCard}>
-      <Text style={styles.searchPlaceholder}>Search users, habits, or categories...</Text>
-    </View>
-  );
 
   const PortfolioCard = ({ investment }: { investment: any }) => {
     const isGain = investment.profit >= 0;
@@ -328,87 +136,6 @@ export default function SocialScreen() {
     </Pressable>
   );
 
-  const FeaturedProfileCard = () => (
-    <Pressable style={styles.featuredCard}>
-      <View style={styles.featuredCenter}>
-        <View style={styles.featuredAvatarContainer}>
-          <Image source={featuredProfile.avatar} style={styles.featuredAvatar} />
-        </View>
-        <Text style={styles.featuredName}>{featuredProfile.name}</Text>
-        <Text style={styles.featuredTitle}>{featuredProfile.title}</Text>
-      </View>
-      <Text style={styles.featuredDescription}>{featuredProfile.description}</Text>
-      <View style={styles.featuredStats}>
-        <Text style={styles.featuredValue}>{HABITCOIN_SYMBOL}{featuredProfile.totalValue.toLocaleString()}</Text>
-        <Text style={styles.featuredLabel}>Total Value</Text>
-      </View>
-      <View style={styles.featuredMetrics}>
-        <View style={styles.featuredMetric}>
-          <Text style={styles.featuredMetricValue}>{featuredProfile.streak}</Text>
-          <Text style={styles.featuredMetricLabel}>Day Streak</Text>
-        </View>
-        <View style={styles.featuredMetric}>
-          <Text style={styles.featuredMetricValue}>{featuredProfile.supporters}</Text>
-          <Text style={styles.featuredMetricLabel}>Supporters</Text>
-        </View>
-      </View>
-    </Pressable>
-  );
-
-  const SuccessStoryCard = () => (
-    <Pressable style={styles.successCard}>
-      <View style={styles.successHeader}>
-        <View style={styles.successAvatarContainer}>
-          <Image source={successStory.avatar} style={styles.successAvatar} />
-        </View>
-        <View style={styles.successInfo}>
-          <Text style={styles.successName}>{successStory.name}</Text>
-          <Text style={styles.successHabit}>{successStory.habit}</Text>
-        </View>
-      </View>
-      <Text style={styles.successStory}>{successStory.story}</Text>
-      <View style={styles.successStats}>
-        <View style={styles.successStat}>
-          <Text style={styles.successStatValue}>{HABITCOIN_SYMBOL}{successStory.totalEarned}</Text>
-          <Text style={styles.successStatLabel}>Total Earned</Text>
-        </View>
-        <View style={styles.successStat}>
-          <Text style={styles.successStatValue}>{successStory.supporters}</Text>
-          <Text style={styles.successStatLabel}>Supporters</Text>
-        </View>
-        <View style={styles.successStat}>
-          <Text style={styles.successStatValue}>{successStory.streak}</Text>
-          <Text style={styles.successStatLabel}>Day Streak</Text>
-        </View>
-      </View>
-    </Pressable>
-  );
-
-  const LeaderboardCard = () => (
-    <View>
-      <Text style={styles.leaderboardTitle}>TOP PERFORMERS</Text>
-      <View style={styles.leaderboardCard}>
-        <View style={{ gap: 16 }}>
-          {leaderboardUsers.map((user, index) => (
-            <View key={user.rank} style={styles.leaderboardRow}>
-              <View style={styles.leaderboardRank}>
-                <Text style={styles.rankNumber}>{user.rank}</Text>
-              </View>
-              <View style={styles.leaderboardUserInfo}>
-                <Image source={user.avatar} style={styles.leaderboardAvatar} />
-                <View style={styles.leaderboardUserDetails}>
-                  <Text style={styles.leaderboardName}>{user.name}</Text>
-                  <Text style={styles.leaderboardUserTitle}>{user.title}</Text>
-                </View>
-              </View>
-              <Text style={styles.leaderboardValue}>{HABITCOIN_SYMBOL}{user.totalValue.toLocaleString()}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
     <ScrollView
@@ -420,7 +147,7 @@ export default function SocialScreen() {
           <View style={styles.headerRow}>
             <Image source={require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>SOCIAL</Text>
+              <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>SUPPORT</Text>
             </View>
             <View style={{ width: 32, height: 32 }} />
           </View>
@@ -455,8 +182,21 @@ export default function SocialScreen() {
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <Text style={styles.sectionTitle}>RECOMMENDATIONS</Text>
                 <View style={{ gap: 12 }}>
-                  {recommendations.map((rec) => (
-                    <RecommendationCard key={rec.id} recommendation={rec} />
+                  {socialManager.getRecommendations().map((user, i) => {
+                    const habit = socialManager.getFriendHabits().find(h => h.userId === user.id) ?? new Habit({ title: 'Habit' });
+                    return (
+                      <UserHabitCard key={user.id || i} user={user} habit={habit} onPress={handleSupport} reason="Consistent streaks" />
+                    );
+                  })}
+                </View>
+              </GlassCard>
+
+              {/* Categories */}
+              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
+                <Text style={styles.sectionTitle}>TRENDING CATEGORIES</Text>
+                <View style={styles.categoriesGrid}>
+                  {socialManager.getTrendingCategories().map((category, index) => (
+                    <CategoryCard key={index} category={category} />
                   ))}
                 </View>
               </GlassCard>
@@ -465,19 +205,12 @@ export default function SocialScreen() {
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <Text style={styles.sectionTitle}>SUPPORT OPPORTUNITIES</Text>
                 <View style={{ gap: 12 }}>
-                  {friendsHabits.map((habit) => (
-                    <InvestmentCard key={habit.id} habit={habit} />
-                  ))}
-                </View>
-              </GlassCard>
-
-              {/* Categories */}
-              <GlassCard style={{ backgroundColor: Colors.main.surface }}>
-                <Text style={styles.sectionTitle}>TRENDING CATEGORIES</Text>
-                <View style={styles.categoriesGrid}>
-                  {trendingCategories.map((category, index) => (
-                    <CategoryCard key={index} category={category} />
-                  ))}
+                  {socialManager.getFriendHabits().map((habit) => {
+                    const user = socialManager.getFriends().find(u => u.id === habit.userId) as User;
+                    return (
+                      <UserHabitCard key={habit.id} user={user} habit={habit} onPress={handleSupport} />
+                    );
+                  })}
                 </View>
               </GlassCard>
             </>
@@ -488,18 +221,18 @@ export default function SocialScreen() {
               {/* Featured Profile */}
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <Text style={styles.sectionTitle}>FEATURED PERFORMER</Text>
-                <FeaturedProfileCard />
+                <FeaturedProfileCard user={socialManager.getFeaturedProfile()} />
               </GlassCard>
 
               {/* Success Story */}
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <Text style={styles.sectionTitle}>SUCCESS STORY</Text>
-                <SuccessStoryCard />
+                <SuccessStoryCard story={socialManager.getSuccessStory()} />
               </GlassCard>
 
               {/* Leaderboard */}
               <GlassCard style={{ backgroundColor: Colors.main.surface }}>
-                <LeaderboardCard />
+                <LeaderboardCard users={leaderboardManager.getLeaderboardUsers()} />
               </GlassCard>
             </>
           )}

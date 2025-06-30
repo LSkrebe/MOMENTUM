@@ -56,7 +56,15 @@ export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = B
   const effectiveWidth = showActions ? bottleWidth - 80 : bottleWidth;
 
   return (
-    <View style={[bottleStyles.bottleWrap, { marginBottom: 18, flexDirection: 'row', alignItems: 'center' }]}> 
+    <View style={[
+      bottleStyles.bottleWrap,
+      {
+        marginBottom: 18,
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: showActions ? effectiveWidth : '100%',
+      },
+    ]}>
       <Pressable
         style={[
           bottleStyles.bottleOuter,
@@ -107,7 +115,7 @@ export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = B
                 { color: textColor, transform: [{ scale: streakAnim }] },
               ]}
             >
-              {habit.streakCount || 0}
+              {(habit.streakCount || 0) + 'D'}
             </Animated.Text>
           </View>
         </View>
@@ -140,10 +148,10 @@ const bottleStyles = StyleSheet.create({
   },
   bottleOuter: {
     height: BOTTLE_HEIGHT,
-    borderRadius: 18,
-    backgroundColor: Colors.main.surface,
-    borderWidth: 2,
-    borderColor: Colors.main.accentSoft,
+    borderRadius: 16,
+    backgroundColor: Colors.main.card,
+    borderWidth: 1,
+    borderColor: Colors.main.border,
     overflow: 'hidden',
     justifyContent: 'center',
     position: 'relative',

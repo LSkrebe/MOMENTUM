@@ -13,6 +13,10 @@ export function MotivationalCard({ name, avatar, habit, message }: { name: strin
       flexDirection: 'row',
       alignItems: 'center',
       gap: 16,
+      shadowColor: Colors.main.accentSoft,
+      shadowOpacity: 0.10,
+      shadowRadius: 16,
+      elevation: 4,
     }}>
       <View style={{
         backgroundColor: Colors.main.accent,
