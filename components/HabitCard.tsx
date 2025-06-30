@@ -1,92 +1,191 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Pressable, Animated, StyleSheet, TextInput, Keyboard, TouchableOpacity } from 'react-native';
 import { Habit } from '../models/Habit';
 import Colors from '../constants/Colors';
 import { HABITCOIN_SYMBOL } from '../constants/Currency';
+import Typography from '../constants/Typography';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 interface HabitCardProps {
   habit: Habit;
   onComplete?: () => void;
+  onToggle: () => void;
+  bottleWidth?: number;
+  editable?: boolean;
+  inputValue?: string;
+  onInputChange?: (text: string) => void;
+  onInputBlur?: () => void;
+  onLongPress?: () => void;
+  showActions?: boolean;
+  onDelete?: () => void;
+  onEdit?: () => void;
 }
 
-export const HabitCard: React.FC<HabitCardProps> = ({ habit, onComplete }) => {
-  let status = 'due';
-  let statusColor = Colors.main.accent;
-  let statusText = 'DUE';
-  if (habit.completedToday) {
-    status = 'completed';
-    statusColor = Colors.main.accent;
-    statusText = 'COMPLETED';
-  } else if (habit.missedToday) {
-    status = 'missed';
-    statusColor = Colors.main.textSecondary;
-    statusText = 'MISSED';
-  }
+const BOTTLE_HEIGHT = 74;
+const BOTTLE_WIDTH = 320; // fallback, should be set by parent
+
+export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = BOTTLE_WIDTH, editable, inputValue, onInputChange, onInputBlur, onLongPress, showActions, onDelete, onEdit }: HabitCardProps) {
+  const completed = !!habit.completedToday;
+  const textColor = completed ? Colors.main.textPrimary : Colors.main.textSecondary;
+
+  // Interpolate color for fill
+  const interpolateColor = (animatedColor: Animated.Value) =>
+    animatedColor.interpolate({
+      inputRange: [0, 1],
+      outputRange: [Colors.main.accentSoft, Colors.main.accent],
+    });
+
+  // --- Streak Animation ---
+  const streakAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (habit.completedToday) {
+      Animated.sequence([
+        Animated.timing(streakAnim, { toValue: 1.3, duration: 100, useNativeDriver: true }),
+        Animated.timing(streakAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.sequence([
+        Animated.timing(streakAnim, { toValue: 0.7, duration: 100, useNativeDriver: true }),
+        Animated.timing(streakAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [habit.completedToday]);
+  // ------------------------
+
+  // Shrink width if actions are shown
+  const effectiveWidth = showActions ? bottleWidth - 80 : bottleWidth;
+
   return (
-    <View style={styles.card}>
-      <View style={styles.row}>
-        <Text style={styles.title}>{habit.title}</Text>
-        <Text style={[styles.status, { color: statusColor }]}>{statusText}</Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.value}>{HABITCOIN_SYMBOL}{habit.currentPrice}</Text>
-        <Text style={styles.streak}>🔥 {habit.streakCount}d</Text>
-      </View>
-      <TouchableOpacity style={[styles.button, { backgroundColor: status === 'completed' ? Colors.main.accent : Colors.main.accent }]} onPress={onComplete} disabled={status === 'completed'}>
-        <Text style={styles.buttonText}>{status === 'completed' ? 'Done' : 'Mark Complete'}</Text>
-      </TouchableOpacity>
+    <View style={[bottleStyles.bottleWrap, { marginBottom: 18, flexDirection: 'row', alignItems: 'center' }]}> 
+      <Pressable
+        style={[
+          bottleStyles.bottleOuter,
+          { width: showActions ? effectiveWidth : '100%' }
+        ]}
+        onPress={onToggle}
+        onLongPress={onLongPress}
+        disabled={habit.disabled}
+      >
+        <Animated.View
+          style={[
+            bottleStyles.bottleFill,
+            {
+              width: habit.animatedFill.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, effectiveWidth],
+              }),
+              backgroundColor: interpolateColor(habit.animatedColor),
+            },
+          ]}
+        />
+        <View style={[bottleStyles.bottleGlass, { borderWidth: 0 }]} />
+        <View style={bottleStyles.bottleContent} pointerEvents="none">
+          <View style={{ flex: 1 }}>
+            {editable ? (
+              <TextInput
+                style={[
+                  bottleStyles.bottleLabel,
+                  { color: Colors.main.textPrimary, backgroundColor: 'transparent', padding: 0, borderWidth: 0 }
+                ]}
+                autoFocus
+                placeholder="Enter habit name"
+                placeholderTextColor={Colors.main.textSecondary}
+                value={inputValue}
+                onChangeText={onInputChange}
+                onBlur={onInputBlur}
+                onSubmitEditing={() => { Keyboard.dismiss(); onInputBlur && onInputBlur(); }}
+                returnKeyType="done"
+              />
+            ) : (
+              <Text style={[bottleStyles.bottleLabel, { color: textColor }]} numberOfLines={2} ellipsizeMode="tail">{habit.title}</Text>
+            )}
+          </View>
+          <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+            <Animated.Text
+              style={[
+                bottleStyles.bottleStreak,
+                { color: textColor, transform: [{ scale: streakAnim }] },
+              ]}
+            >
+              {habit.streakCount || 0}
+            </Animated.Text>
+          </View>
+        </View>
+      </Pressable>
+      {showActions && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }} pointerEvents="box-none">
+          <TouchableOpacity
+            onPress={onEdit}
+            style={{ marginRight: 12 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="pencil-outline" size={22} color={Colors.main.accent} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onDelete}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="trash-outline" size={22} color={Colors.main.accent} />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
-};
+}
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.main.card,
-    borderRadius: 16,
-    padding: 18,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: Colors.main.border,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+const bottleStyles = StyleSheet.create({
+  bottleWrap: {
     alignItems: 'center',
+    width: '100%',
+  },
+  bottleOuter: {
+    height: BOTTLE_HEIGHT,
+    borderRadius: 18,
+    backgroundColor: Colors.main.surface,
+    borderWidth: 2,
+    borderColor: Colors.main.accentSoft,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    position: 'relative',
     marginBottom: 6,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.main.textPrimary,
+  bottleFill: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    height: '100%',
+    borderRadius: 16,
+    zIndex: 1,
   },
-  status: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+  bottleGlass: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 18,
+    borderWidth: 0,
+    borderColor: Colors.main.accentSoft,
+    zIndex: 2,
   },
-  value: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: Colors.main.accent,
-  },
-  streak: {
-    fontSize: 15,
-    color: Colors.main.accent,
-    fontWeight: '500',
-  },
-  button: {
-    marginTop: 10,
-    borderRadius: 8,
-    paddingVertical: 10,
+  bottleContent: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: BOTTLE_HEIGHT,
+    paddingHorizontal: 16,
+    zIndex: 3,
   },
-  buttonText: {
-    color: '#fff',
+  bottleLabel: {
+    color: Colors.main.textSecondary,
+    fontSize: 17,
     fontWeight: 'bold',
+    maxWidth: BOTTLE_WIDTH * 0.55,
+  },
+  bottleStreak: {
+    color: Colors.main.textSecondary,
     fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 2,
   },
 }); 

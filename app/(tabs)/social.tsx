@@ -435,11 +435,6 @@ export default function SocialScreen() {
               onPress={() => setSelectedTab('discover')} 
             />
             <TabButton 
-              title="PORTFOLIO" 
-              isActive={selectedTab === 'portfolio'} 
-              onPress={() => setSelectedTab('portfolio')} 
-            />
-            <TabButton 
               title="TRENDING" 
               isActive={selectedTab === 'trending'} 
               onPress={() => setSelectedTab('trending')} 
@@ -482,45 +477,6 @@ export default function SocialScreen() {
                 <View style={styles.categoriesGrid}>
                   {trendingCategories.map((category, index) => (
                     <CategoryCard key={index} category={category} />
-                  ))}
-                </View>
-              </GlassCard>
-            </>
-          )}
-
-          {selectedTab === 'portfolio' && (
-            <>
-              {/* Portfolio Overview */}
-              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <Text style={styles.sectionTitle}>PORTFOLIO OVERVIEW</Text>
-                <View style={styles.portfolioStats}>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>Habits</Text>
-                    <Text style={styles.statValue}>{HABITCOIN_SYMBOL}{displayMyHabits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>Support</Text>
-                    <Text style={styles.statValue}>{HABITCOIN_SYMBOL}{displaySupportValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
-                  </View>
-                </View>
-              </GlassCard>
-
-              {/* Your Support */}
-              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <Text style={styles.sectionTitle}>YOUR SUPPORT</Text>
-                <View style={{ gap: 12 }}>
-                  {portfolioInvestments.map((investment, index) => (
-                    <PortfolioCard key={index} investment={investment} />
-                  ))}
-                </View>
-              </GlassCard>
-
-              {/* Your Supporters */}
-              <GlassCard style={{ backgroundColor: Colors.main.surface }}>
-                <Text style={styles.sectionTitle}>YOUR SUPPORTERS</Text>
-                <View style={{ gap: 12 }}>
-                  {portfolioSupporters.map((supporter, index) => (
-                    <SupporterCard key={index} supporter={supporter} />
                   ))}
                 </View>
               </GlassCard>
