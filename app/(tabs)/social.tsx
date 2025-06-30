@@ -416,16 +416,13 @@ export default function SocialScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom }}
       >
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: Colors.main.accent }]}>
+        <View style={[styles.header, { backgroundColor: Colors.main.accent }]}> 
           <View style={styles.headerRow}>
             <Image source={require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>SOCIAL</Text>
             </View>
             <View style={{ width: 32, height: 32 }} />
-          </View>
-          <View style={styles.balanceContainer}>
-            <Text style={styles.balanceAmount}>{HABITCOIN_SYMBOL}{userBalance.toLocaleString()}</Text>
           </View>
         </View>
 
@@ -582,18 +579,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 2,
-  },
-  balanceContainer: {
-    alignItems: 'center',
-  },
-  balanceAmount: {
-    color: Colors.main.background,
-    fontSize: 32,
-    fontWeight: 'bold',
-    fontFamily: Typography.fontFamily.numeric,
-    marginTop: 2,
-    marginBottom: 2,
-    textAlign: 'center',
   },
   sectionTitle: {
     color: Colors.main.textPrimary,

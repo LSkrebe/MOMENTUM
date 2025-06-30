@@ -178,52 +178,6 @@ export default function ProfileScreen() {
     </View>
   );
 
-  // Inventory Card Component
-  const InventoryCard = () => {
-    const filteredItems = selectedInventoryType === 'all' 
-      ? inventoryItems 
-      : inventoryItems.filter(item => item.type === selectedInventoryType);
-
-    const InventoryItem = ({ item }: { item: any }) => (
-      <View style={[styles.inventoryItem, item.equipped && styles.equippedItem]}>
-        <View style={styles.itemHeader}>
-          <Text style={styles.itemName}>{item.name}</Text>
-          <Text style={styles.itemRarity}>
-            {item.rarity}
-          </Text>
-        </View>
-      </View>
-    );
-
-    return (
-      <>
-        {/* Filter Carousel */}
-        <View style={styles.filterCarousel}>
-          <Pressable style={styles.carouselButton} onPress={handlePreviousFilter}>
-            <Text style={styles.carouselButtonText}>◀</Text>
-          </Pressable>
-          
-          <View style={styles.carouselContent}>
-            <Text style={styles.carouselFilterText}>
-              {filterTypes[carouselIndex].charAt(0).toUpperCase() + filterTypes[carouselIndex].slice(1)}
-            </Text>
-          </View>
-          
-          <Pressable style={styles.carouselButton} onPress={handleNextFilter}>
-            <Text style={styles.carouselButtonText}>▶</Text>
-          </Pressable>
-        </View>
-
-        {/* Inventory Items */}
-        <View style={{ gap: 8 }}>
-          {filteredItems.map((item) => (
-            <InventoryItem key={item.id} item={item} />
-          ))}
-        </View>
-      </>
-    );
-  };
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
@@ -252,12 +206,6 @@ export default function ProfileScreen() {
           <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
             <Text style={styles.statsTitle}>PERFORMANCE STATS</Text>
             <StatsCard />
-          </GlassCard>
-
-          {/* Inventory Card */}
-          <GlassCard style={{ backgroundColor: Colors.main.surface }}>
-            <Text style={styles.inventoryTitle}>INVENTORY</Text>
-            <InventoryCard />
           </GlassCard>
         </View>
       </ScrollView>
@@ -406,80 +354,5 @@ const styles = StyleSheet.create({
     color: Colors.main.textSecondary,
     fontSize: 12,
     textAlign: 'center',
-  },
-  inventoryTitle: {
-    color: Colors.main.textPrimary,
-    fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    marginBottom: 16,
-  },
-  filterCarousel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.main.surface,
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.main.border,
-  },
-  carouselButton: {
-    padding: 8,
-    backgroundColor: Colors.main.card,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.main.border,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-    minWidth: 40,
-    alignItems: 'center',
-  },
-  carouselContent: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  carouselButtonText: {
-    color: Colors.main.accent,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  carouselFilterText: {
-    color: Colors.main.textPrimary,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  inventoryItem: {
-    padding: 16,
-    backgroundColor: Colors.main.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.main.border,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
-    position: 'relative',
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  itemName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.main.textPrimary,
-    flex: 1,
-  },
-  itemRarity: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: Colors.main.textSecondary,
-  },
-  equippedItem: {
-    opacity: 0.5,
   },
 }); 

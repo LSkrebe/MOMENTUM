@@ -26,21 +26,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Habits',
           tabBarIcon: ({ color }) => <TabBarIcon name="circle" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="market"
-        options={{
-          title: 'Market',
-          tabBarIcon: ({ color }) => <TabBarIcon name="square" color={color} />,
         }}
       />
       <Tabs.Screen
         name="social"
         options={{
-          title: 'Social',
+          title: 'Support',
           tabBarIcon: ({ color }) => <TabBarIcon name="hexagon" color={color} />,
         }}
       />

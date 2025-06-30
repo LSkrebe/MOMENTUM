@@ -2,15 +2,13 @@ import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, Animated, Dimensions, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard } from '../../components/GlassCard';
-import { SupportCard } from '../../components/SupportCard';
-import { SupportingCard } from '../../components/SupportingCard';
 import Colors from '../../constants/Colors';
 import Typography from '../../constants/Typography';
 import { HABITCOIN_SYMBOL } from '../../constants/Currency';
 import { User } from '../../models/User';
 import { Habit } from '../../models/Habit';
-import { Support } from '../../models/Support';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const BOTTLE_CONTAINER_PADDING = 24;
@@ -32,44 +30,17 @@ const habits = [
   new Habit({ title: 'Meditation', currentPrice: 15, streakCount: 7, missedToday: true }),
 ];
 
-// People you're supporting (SUPPORTING card)
-const peopleYouSupport = [
-  { name: 'Sarah', avatar: require('../../assets/images/icon.png'), amount: 320 },
-  { name: 'Mike', avatar: require('../../assets/images/icon.png'), amount: 210 },
-  { name: 'Lisa', avatar: require('../../assets/images/icon.png'), amount: 150 },
-];
-
 function getInitialHabitState() {
-  // For testing: first empty (shows MIN_FILL), second halfway, third one away from full
-  return [
-    {
-      ...habits[0],
-      fillLevel: 0,
-      completedToday: false,
-      animatedFill: new Animated.Value(MIN_FILL),
-      animatedColor: new Animated.Value(0),
-      disabled: false,
-      previousFillLevel: 0, // Track previous fill level for undo
-    },
-    {
-      ...habits[1],
-      fillLevel: Math.floor(BOTTLE_SEGMENTS / 2),
-      completedToday: false,
-      animatedFill: new Animated.Value((Math.floor(BOTTLE_SEGMENTS / 2) / BOTTLE_SEGMENTS)),
-      animatedColor: new Animated.Value(0),
-      disabled: false,
-      previousFillLevel: Math.floor(BOTTLE_SEGMENTS / 2), // Track previous fill level for undo
-    },
-    {
-      ...habits[2],
-      fillLevel: BOTTLE_SEGMENTS - 1,
-      completedToday: false,
-      animatedFill: new Animated.Value(((BOTTLE_SEGMENTS - 1) / BOTTLE_SEGMENTS)),
-      animatedColor: new Animated.Value(0),
-      disabled: false,
-      previousFillLevel: BOTTLE_SEGMENTS - 1, // Track previous fill level for undo
-    },
-  ];
+  // Each habit bar is either empty (not completed) or full (completed)
+  return habits.map(habit => ({
+    ...habit,
+    fillLevel: 0,
+    completedToday: false,
+    animatedFill: new Animated.Value(0),
+    animatedColor: new Animated.Value(0),
+    disabled: false,
+    previousFillLevel: 0, // Track previous fill level for undo
+  }));
 }
 
 export default function PortfolioScreen() {
@@ -86,13 +57,6 @@ export default function PortfolioScreen() {
   // For demo, static support value
   const supportValue = 1000.25;
 
-  // Add supporters state that tracks which habits they support
-  const [supporters, setSupporters] = useState([
-    { name: 'Sarah', avatar: require('../../assets/images/icon.png'), purchasePrice: 234, currentValue: 320, supportingHabit: 'Morning Run' },
-    { name: 'Mike', avatar: require('../../assets/images/icon.png'), purchasePrice: 189, currentValue: 210, supportingHabit: 'Meditation' },
-    { name: 'Lisa', avatar: require('../../assets/images/icon.png'), purchasePrice: 156, currentValue: 150, supportingHabit: 'You' },
-  ]);
-
   // Add animated values for portfolio, myHabits, and todayPnl
   const animatedPortfolio = useRef(new Animated.Value(myHabitsValue + supportValue)).current;
   const animatedMyHabits = useRef(new Animated.Value(myHabitsValue)).current;
@@ -100,6 +64,9 @@ export default function PortfolioScreen() {
   const [displayPortfolio, setDisplayPortfolio] = useState(myHabitsValue + supportValue);
   const [displayMyHabits, setDisplayMyHabits] = useState(myHabitsValue);
   const [displayPnl, setDisplayPnl] = useState(todayPnl);
+
+  // Per-habit streak animation refs
+  const streakAnimsRef = useRef(habitList.map(() => new Animated.Value(1)));
 
   const router = useRouter();
 
@@ -150,6 +117,24 @@ export default function PortfolioScreen() {
     };
   }, []);
 
+  // Animate streaks when completedToday changes
+  useEffect(() => {
+    habitList.forEach((habit, i) => {
+      const streakAnim = streakAnimsRef.current[i];
+      if (habit.completedToday) {
+        Animated.sequence([
+          Animated.timing(streakAnim, { toValue: 1.3, duration: 100, useNativeDriver: true }),
+          Animated.timing(streakAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+        ]).start();
+      } else {
+        Animated.sequence([
+          Animated.timing(streakAnim, { toValue: 0.7, duration: 100, useNativeDriver: true }),
+          Animated.timing(streakAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+        ]).start();
+      }
+    });
+  }, [habitList]);
+
   // Handle bottle press
   const handleBottlePress = (i: number) => {
     // Set disabled true immediately
@@ -176,21 +161,6 @@ export default function PortfolioScreen() {
             // Update values
             setMyHabitsValue(v => v + (habit.currentPrice || 0));
             setTodayPnl(p => p + (habit.currentPrice || 0));
-            
-            // Update supporters who are supporting this habit
-            setSupporters(prevSupporters => 
-              prevSupporters.map(supporter => {
-                if (supporter.supportingHabit === habit.title || supporter.supportingHabit === 'You') {
-                  // Give supporters a bonus when the habit they support is completed
-                  const bonus = Math.floor((habit.currentPrice || 0) * 0.1); // 10% bonus
-                  return {
-                    ...supporter,
-                    currentValue: supporter.currentValue + bonus
-                  };
-                }
-                return supporter;
-              })
-            );
             
             // Animate to full fill and green color
             Animated.timing(habit.animatedFill, {
@@ -220,20 +190,6 @@ export default function PortfolioScreen() {
             // Update values
             setMyHabitsValue(v => v - (habit.currentPrice || 0));
             setTodayPnl(p => p - (habit.currentPrice || 0));
-            
-            // Remove bonus from supporters when habit is unchecked
-            setSupporters(prevSupporters => 
-              prevSupporters.map(supporter => {
-                if (supporter.supportingHabit === habit.title || supporter.supportingHabit === 'You') {
-                  const bonus = Math.floor((habit.currentPrice || 0) * 0.1); // 10% bonus
-                  return {
-                    ...supporter,
-                    currentValue: Math.max(0, supporter.currentValue - bonus) // Don't go below 0
-                  };
-                }
-                return supporter;
-              })
-            );
             
             // Animate back to previous fill level
             const targetFill = newFill === 0 ? MIN_FILL : newFill / BOTTLE_SEGMENTS;
@@ -284,43 +240,11 @@ export default function PortfolioScreen() {
         {/* Portfolio Header Card (Greener) */}
         <View style={[styles.headerBg, { backgroundColor: Colors.main.accent }]}> 
           <View style={styles.headerRow}>
-            {/* Logo icon on the left, no border or extra styling */}
             <Image source={user.profileImage ? { uri: user.profileImage } : require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
-            {/* Centered title */}
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>MOMENTUM</Text>
+              <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>HABITS</Text>
             </View>
-            {/* Gain text on the right */}
-            {displayPnl !== 0 && (
-              <Text style={{ 
-                width: 40, 
-                height: 32, 
-                fontSize: 10, 
-                fontWeight: 'normal',
-                color: Colors.main.background,
-                textAlign: 'center',
-                textAlignVertical: 'center',
-                lineHeight: 32
-              }}>
-                {displayPnl >= 0 ? '+' : ''}{Math.abs(displayPnl) >= 100 ? Math.round(displayPnl) : displayPnl.toFixed(2)}
-              </Text>
-            )}
-            {displayPnl === 0 && (
-              <View style={{ width: 40, height: 32 }} />
-            )}
-          </View>
-          <View style={{ position: 'relative' }}>
-            <Text style={[styles.portfolioValue, { color: Colors.main.background }]}> 
-              {HABITCOIN_SYMBOL}{displayPortfolio.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Text>
-          </View>
-          <View style={styles.pieRow}>
-            <Text style={[styles.pieStat, { color: Colors.main.background }]}>
-              Habits{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{displayMyHabits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
-            </Text>
-            <Text style={[styles.pieStat, { color: Colors.main.background }]}>
-              Support{"\n"}<Text style={styles.pieValue}>{HABITCOIN_SYMBOL}{supportValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
-            </Text>
+            <View style={{ width: 32, height: 32 }} />
           </View>
         </View>
         {/* Habits as Glassy Bottles (vertical stack, animated) */}
@@ -328,69 +252,9 @@ export default function PortfolioScreen() {
           {habitList.map((habit, i) => {
             const completed = !!habit.completedToday;
             const textColor = completed ? Colors.main.textPrimary : Colors.main.textSecondary;
-            // Animation state for streak and currency pop-up
-            const [streakAnim] = React.useState(new Animated.Value(1));
-            const [showCurrency, setShowCurrency] = React.useState(false);
-            const [currencyAnim] = React.useState(new Animated.Value(0));
-
-            // Animate streak and currency gain
-            React.useEffect(() => {
-              if (habit.completedToday) {
-                // Animate streak pop (scale up)
-                Animated.sequence([
-                  Animated.timing(streakAnim, { toValue: 1.3, duration: 100, useNativeDriver: true }),
-                  Animated.timing(streakAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
-                ]).start();
-                // Show and animate currency pop-up
-                setShowCurrency(true);
-                currencyAnim.setValue(0);
-                Animated.timing(currencyAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start(() => {
-                  setShowCurrency(false);
-                });
-              } else {
-                // Animate streak shrink (scale down)
-                Animated.sequence([
-                  Animated.timing(streakAnim, { toValue: 0.7, duration: 100, useNativeDriver: true }),
-                  Animated.timing(streakAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
-                ]).start();
-              }
-            }, [habit.completedToday]);
-
+            const streakAnim = streakAnimsRef.current[i];
             return (
               <View key={i} style={[bottleStyles.bottleWrap, { marginBottom: 18 }]}> 
-                {/* Currency gain pop-up, absolutely positioned above the bottle and in front of everything */}
-                {showCurrency && habit.completedToday && (habit.currentPrice || 0) > 0 && (
-                  <Animated.View
-                    style={{
-                      position: 'absolute',
-                      right: 0,
-                      bottom: BOTTLE_HEIGHT - 8, // just above the streak number
-                      zIndex: 99,
-                      alignItems: 'flex-end',
-                      opacity: currencyAnim,
-                      pointerEvents: 'none',
-                      transform: [
-                        { translateY: currencyAnim.interpolate({ inputRange: [0, 1], outputRange: [10, -18] }) },
-                        { scale: currencyAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.7, 1.2, 1] }) },
-                      ],
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: Colors.main.accent,
-                        fontWeight: 'bold',
-                        fontSize: 16,
-                        textShadowColor: '#0002',
-                        textShadowOffset: { width: 0, height: 1 },
-                        textShadowRadius: 2,
-                      }}
-                      numberOfLines={1}
-                      ellipsizeMode="clip"
-                    >
-                      +{HABITCOIN_SYMBOL}{habit.currentPrice || 0}
-                    </Text>
-                  </Animated.View>
-                )}
                 <Pressable
                   style={bottleStyles.bottleOuter}
                   onPress={() => handleBottlePress(i)}
@@ -428,43 +292,23 @@ export default function PortfolioScreen() {
               </View>
             );
           })}
-        </View>
-        {/* Top Supporters Section (neutral card) */}
-        <View style={{ paddingHorizontal: 12, marginBottom: 8 }}>
-          <GlassCard style={{ backgroundColor: Colors.main.surface }}>
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>SUPPORTERS</Text>
-              <Text style={styles.sectionLink} onPress={() => router.push('/social?tab=portfolio')}>View All →</Text>
-            </View>
-            {supporters.map((supporter, i) => (
-              <SupportCard
-                key={i}
-                investment={null}
-                habitTitle={supporter.name}
-                supporting={supporter.supportingHabit}
-                profit={supporter.currentValue - supporter.purchasePrice}
-                purchasePrice={supporter.purchasePrice}
-              />
-            ))}
-          </GlassCard>
-        </View>
-        {/* Support Section (neutral card) */}
-        <View style={{ paddingHorizontal: 12 }}>
-          <GlassCard style={{ backgroundColor: Colors.main.surface }}>
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionTitle}>SUPPORTING</Text>
-              <Text style={styles.sectionLink} onPress={() => router.push('/social?tab=portfolio')}>View All →</Text>
-            </View>
-            <View style={{ height: 8 }} />
-            {peopleYouSupport.map((supporter, i) => (
-              <SupportingCard
-                key={i}
-                name={supporter.name}
-                avatar={supporter.avatar}
-                amount={supporter.amount}
-              />
-            ))}
-          </GlassCard>
+          {/* Add Habit Button UI */}
+          <Pressable
+            style={{
+              marginTop: 8,
+              backgroundColor: Colors.main.background,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: Colors.main.background,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 18,
+              flexDirection: 'row',
+            }}
+            onPress={() => { /* Add logic here if needed */ }}
+          >
+            <Text style={{ color: Colors.main.accent, fontSize: 18, fontWeight: 'bold' }}>Add Habit</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </View>
