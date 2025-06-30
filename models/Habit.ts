@@ -78,4 +78,38 @@ export class HabitManager {
     this.habits.push(newHabit);
     return this.habits.length - 1;
   }
+
+  getNextAchievementHabit(): { habit: Habit; next: number } | null {
+    // 1. Prioritize showing a habit that just hit a milestone today
+    for (let habit of this.habits) {
+      const next = habit.getNextMilestone();
+      if (
+        habit.lastMilestoneAchieved === habit.streakCount &&
+        habit.lastMilestoneDate === new Date().toISOString().slice(0, 10)
+      ) {
+        return { habit, next: habit.streakCount };
+      }
+    }
+    // 2. Otherwise, show the closest to next milestone (not already at a milestone)
+    let best: { habit: Habit; next: number } | null = null;
+    let minDiff = Infinity;
+    for (let habit of this.habits) {
+      const next = habit.getNextMilestone();
+      const diff = next - habit.streakCount;
+      if (diff > 0 && diff < minDiff) {
+        minDiff = diff;
+        best = { habit, next };
+      }
+    }
+    // 3. If all habits are at a milestone but not today, show the one that just hit it
+    if (!best) {
+      for (let habit of this.habits) {
+        const next = habit.getNextMilestone();
+        if (habit.streakCount === next) {
+          return { habit, next };
+        }
+      }
+    }
+    return best;
+  }
 } 

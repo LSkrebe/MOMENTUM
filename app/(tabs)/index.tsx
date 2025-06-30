@@ -9,6 +9,8 @@ import { MotivationalCard } from '../../components/MotivationalCard';
 import HeaderBar from '../../components/HeaderBar';
 import { useFocusEffect } from '@react-navigation/native';
 import { GlassCard } from '../../components/GlassCard';
+import { isToday } from '../../utils/date';
+import { MotivationalMessageManager } from '../../models/MotivationalMessage';
 
 const { width } = Dimensions.get('window');
 const BOTTLE_CONTAINER_PADDING = 24;
@@ -29,22 +31,6 @@ export interface MotivationalMessage {
   message: string;
 }
 
-export class MotivationalMessageManager {
-  private message: MotivationalMessage;
-
-  constructor(initialMessage: MotivationalMessage) {
-    this.message = initialMessage;
-  }
-
-  getMessage() {
-    return this.message;
-  }
-
-  setMessage(newMessage: MotivationalMessage) {
-    this.message = newMessage;
-  }
-}
-
 const motivationalMessageManager = new MotivationalMessageManager({
   name: 'Emma Wilson',
   avatar: require('../../assets/images/icon.png'),
@@ -52,49 +38,9 @@ const motivationalMessageManager = new MotivationalMessageManager({
   message: "Keep going! Your consistency inspires me every day. Proud to support your journey!"
 });
 
-function isToday(dateStr: string | undefined) {
-  if (!dateStr) return false;
-  return dateStr === new Date().toISOString().slice(0, 10);
-}
-
-function NextAchievementCard({ habits }: { habits: Habit[] }) {
+function NextAchievementCard({ habits, manager }: { habits: Habit[], manager: any }) {
   if (!habits.length) return null;
-  // 1. Prioritize showing a habit that just hit a milestone today
-  let milestoneHabit = null;
-  for (let habit of habits) {
-    const next = habit.getNextMilestone();
-    if (
-      habit.lastMilestoneAchieved === habit.streakCount &&
-      isToday(habit.lastMilestoneDate)
-    ) {
-      milestoneHabit = { habit, next: habit.streakCount };
-      break;
-    }
-  }
-  // 2. Otherwise, show the closest to next milestone (not already at a milestone)
-  let best = null;
-  let minDiff = Infinity;
-  if (!milestoneHabit) {
-    for (let habit of habits) {
-      const next = habit.getNextMilestone();
-      const diff = next - habit.streakCount;
-      if (diff > 0 && diff < minDiff) {
-        minDiff = diff;
-        best = { habit, next };
-      }
-    }
-  }
-  // 3. If all habits are at a milestone but not today, show the one that just hit it
-  if (!milestoneHabit && !best) {
-    for (let habit of habits) {
-      const next = habit.getNextMilestone();
-      if (habit.streakCount === next) {
-        best = { habit, next };
-        break;
-      }
-    }
-  }
-  const show = milestoneHabit || best;
+  const show = manager.getNextAchievementHabit();
   if (!show) return null;
   const { habit, next } = show;
   const progress = Math.min(habit.streakCount / next, 1);
@@ -238,7 +184,7 @@ export default function HabitsTab() {
         <HeaderBar title="HABITS" />
         {/* Next Achievement Card */}
         <View style={{ paddingHorizontal: 12, marginTop: 18 }}>
-          <NextAchievementCard habits={manager.getHabits()} />
+          <NextAchievementCard habits={manager.getHabits()} manager={manager} />
         </View>
         {/* Habits List */}
         <View style={{ paddingHorizontal: 12, marginTop: 18, marginBottom: 8 }}>

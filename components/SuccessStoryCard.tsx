@@ -36,10 +36,6 @@ const SuccessStoryCard = ({ story }: { story: SuccessStory }) => {
       <Text style={styles.successStory}>{story.story}</Text>
       <View style={styles.successStats}>
         <View style={styles.successStat}>
-          <Text style={styles.successStatValue}>{HABITCOIN_SYMBOL}{story.totalEarned}</Text>
-          <Text style={styles.successStatLabel}>Total Earned</Text>
-        </View>
-        <View style={styles.successStat}>
           <Text style={styles.successStatValue}>{story.supporters}</Text>
           <Text style={styles.successStatLabel}>Supporters</Text>
         </View>

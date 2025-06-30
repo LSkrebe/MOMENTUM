@@ -63,6 +63,13 @@ export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = B
         flexDirection: 'row',
         alignItems: 'center',
         width: showActions ? effectiveWidth : '100%',
+        shadowColor: Colors.main.accentSoft,
+        shadowOpacity: 0.10,
+        shadowRadius: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: Colors.main.border,
+        overflow: 'visible',
       },
     ]}>
       <Pressable

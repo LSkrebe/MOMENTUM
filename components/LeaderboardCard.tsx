@@ -27,7 +27,7 @@ const LeaderboardCard = ({ users }: { users: User[] }) => (
                 <Text style={styles.leaderboardUserTitle}>{user.bio ?? 'Performer'}</Text>
               </View>
             </View>
-            <Text style={styles.leaderboardValue}>{HABITCOIN_SYMBOL}{(user.stats?.habitCoinsEarned ?? 10000).toLocaleString()}</Text>
+            <Text style={styles.leaderboardValue}>{user.stats?.longestStreak ?? 0}D</Text>
           </View>
         ))}
       </View>

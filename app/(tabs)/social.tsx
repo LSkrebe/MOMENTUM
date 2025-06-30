@@ -20,13 +20,10 @@ import SuccessStoryCard from '../../components/SuccessStoryCard';
 import LeaderboardCard from '../../components/LeaderboardCard';
 import SearchCard from '../../components/SearchCard';
 import UserHabitCard from '../../components/UserHabitCard';
-
-// Helper to ensure image source is always ImageSourcePropType
-function getImageSource(img: any): ImageSourcePropType {
-  if (typeof img === 'number') return img;
-  if (typeof img === 'string') return require('../../assets/images/icon.png');
-  return require('../../assets/images/icon.png');
-}
+import PortfolioCard from '../../components/PortfolioCard';
+import SupporterCard from '../../components/SupporterCard';
+import { getRiskColor, getImageSource } from '../../utils/socialUtils';
+import TabButton from '../../components/TabButton';
 
 export default function SocialScreen() {
   const insets = useSafeAreaInsets();
@@ -38,7 +35,7 @@ export default function SocialScreen() {
   const socialManager = new SocialManager();
   const portfolioManager = new PortfolioManager(socialManager.getFriends(), socialManager.getFriendHabits());
   const leaderboardManager = new LeaderboardManager();
-
+  
   // Animated values for portfolio stats - updated to match home tab
   const animatedMyHabits = useRef(new Animated.Value(450)).current;
   const animatedSupportValue = useRef(new Animated.Value(535)).current;
@@ -64,78 +61,6 @@ export default function SocialScreen() {
     }
   };
 
-  const PortfolioCard = ({ investment }: { investment: any }) => {
-    const isGain = investment.profit >= 0;
-    
-    return (
-      <View style={styles.portfolioCard}>
-        <View style={styles.portfolioHeader}>
-          <View style={styles.portfolioInvestorInfo}>
-            <Image source={investment.avatar} style={styles.portfolioAvatar} />
-            <View>
-              <Text style={styles.portfolioName}>{investment.name}</Text>
-              <Text style={styles.portfolioHabit}>{investment.habit}</Text>
-            </View>
-          </View>
-          <View style={styles.portfolioProfitContainer}>
-            <Text style={[styles.portfolioProfitAmount, { color: isGain ? Colors.main.accent : Colors.main.textSecondary }]}>
-              {HABITCOIN_SYMBOL}{Math.abs(investment.profit)} {isGain ? '▲' : '▼'}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.portfolioValues}>
-          <Text style={styles.portfolioInvested}>{HABITCOIN_SYMBOL}{investment.invested}</Text>
-          <Text style={styles.portfolioCurrent}>{HABITCOIN_SYMBOL}{investment.currentValue}</Text>
-        </View>
-      </View>
-    );
-  };
-
-  const SupporterCard = ({ supporter }: { supporter: any }) => {
-    const isGain = supporter.profit >= 0;
-    
-    return (
-      <View style={styles.supporterCard}>
-        <View style={styles.supporterHeader}>
-          <View style={styles.supporterInfo}>
-            <Image source={supporter.avatar} style={styles.supporterAvatar} />
-            <View>
-              <Text style={styles.supporterName}>{supporter.name}</Text>
-              <Text style={styles.supporterHabit}>{supporter.habit}</Text>
-            </View>
-          </View>
-          <View style={styles.supporterProfitContainer}>
-            <Text style={[styles.supporterProfitAmount, { color: isGain ? Colors.main.accent : Colors.main.textSecondary }]}>
-              {HABITCOIN_SYMBOL}{Math.abs(supporter.profit)} {isGain ? '▲' : '▼'}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.supporterDetails}>
-          <Text style={styles.supporterDate}>{supporter.supportDate}</Text>
-          <Text style={styles.supporterCurrent}>{HABITCOIN_SYMBOL}{supporter.currentValue}</Text>
-        </View>
-      </View>
-    );
-  };
-
-  const getRiskColor = (riskLevel: string) => {
-    switch (riskLevel) {
-      case 'Low': return Colors.main.accent;
-      case 'Medium': return '#FF9800';
-      case 'High': return '#F44336';
-      default: return Colors.main.textSecondary;
-    }
-  };
-
-  const TabButton = ({ title, isActive, onPress }: { title: string, isActive: boolean, onPress: () => void }) => (
-    <Pressable 
-      style={[styles.tabButton, isActive && styles.activeTabButton]} 
-      onPress={onPress}
-    >
-      <Text style={[styles.tabText, isActive && styles.activeTabText]}>{title}</Text>
-    </Pressable>
-  );
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
     <ScrollView
@@ -143,7 +68,7 @@ export default function SocialScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom }}
       >
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: Colors.main.accent }]}> 
+        <View style={[styles.header, { backgroundColor: Colors.main.accent }]}>
           <View style={styles.headerRow}>
             <Image source={require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -160,11 +85,19 @@ export default function SocialScreen() {
               title="DISCOVER" 
               isActive={selectedTab === 'discover'} 
               onPress={() => setSelectedTab('discover')} 
+              style={styles.tabButton}
+              textStyle={styles.tabText}
+              activeStyle={styles.activeTabButton}
+              activeTextStyle={styles.activeTabText}
             />
             <TabButton 
               title="TRENDING" 
               isActive={selectedTab === 'trending'} 
               onPress={() => setSelectedTab('trending')} 
+              style={styles.tabButton}
+              textStyle={styles.tabText}
+              activeStyle={styles.activeTabButton}
+              activeTextStyle={styles.activeTabText}
             />
           </View>
         </View>

@@ -1,40 +1,37 @@
 import React from 'react';
-import { Pressable, View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import ProfileUser from '../models/ProfileUser';
 import Colors from '../constants/Colors';
-import { HABITCOIN_SYMBOL } from '../constants/Currency';
-import { User } from '../models/User';
 
-function getImageSource(img: any) {
-  if (typeof img === 'number') return img;
-  if (typeof img === 'string') return require('../assets/images/icon.png');
-  return require('../assets/images/icon.png');
+interface CompleteProfileCardProps {
+  user: ProfileUser;
 }
 
-const FeaturedProfileCard = ({ user }: { user: User }) => (
+const CompleteProfileCard: React.FC<CompleteProfileCardProps> = ({ user }) => (
   <Pressable style={styles.profileCard}>
     <View style={styles.profileCenter}>
       <View style={styles.avatarContainer}>
-        <Image source={getImageSource(user.profileImage)} style={styles.profileAvatar} />
+        <Image source={user.avatar} style={styles.profileAvatar} />
       </View>
       <Text style={styles.profileName}>{user.name}</Text>
-      <Text style={styles.profileTitle}>{(user as any).title ?? 'Elite Performer'}</Text>
-      <Text style={styles.profileLevel}>Level {(user as any).level ?? 42}</Text>
+      <Text style={styles.profileTitle}>{user.title}</Text>
+      <Text style={styles.profileLevel}>Level {user.level}</Text>
     </View>
     <Text style={styles.profileDescription}>
       Elite habit performer with incredible consistency across multiple categories. 
-      Top supporter in the community with {(user as any).supporters ?? 892} supporters.
+      Top supporter in the community with {user.supporters} supporters.
     </Text>
     <View style={styles.profileStats}>
-      <Text style={styles.profileValue}>{(user.stats?.habitsCompleted ?? 15420).toLocaleString()}</Text>
+      <Text style={styles.profileValue}>{user.habitsCompleted.toLocaleString()}</Text>
       <Text style={styles.profileLabel}>Habits Done</Text>
     </View>
     <View style={styles.profileMetrics}>
       <View style={styles.profileMetric}>
-        <Text style={styles.profileMetricValue}>{user.stats?.longestStreak ?? 67}</Text>
+        <Text style={styles.profileMetricValue}>{user.streak}</Text>
         <Text style={styles.profileMetricLabel}>Day Streak</Text>
       </View>
       <View style={styles.profileMetric}>
-        <Text style={styles.profileMetricValue}>{(user as any).supporters ?? 892}</Text>
+        <Text style={styles.profileMetricValue}>{user.supporters}</Text>
         <Text style={styles.profileMetricLabel}>Supporters</Text>
       </View>
     </View>
@@ -56,17 +53,17 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     backgroundColor: Colors.main.accent,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   profileAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   profileName: {
     color: Colors.main.textPrimary,
@@ -126,4 +123,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FeaturedProfileCard; 
+export default CompleteProfileCard; 
