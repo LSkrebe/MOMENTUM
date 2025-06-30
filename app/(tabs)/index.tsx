@@ -52,14 +52,6 @@ const motivationalMessageManager = new MotivationalMessageManager({
   message: "Keep going! Your consistency inspires me every day. Proud to support your journey!"
 });
 
-function getNextMilestone(streak: number) {
-  const milestones = [7, 14, 30, 50, 100, 200, 365];
-  for (let m of milestones) {
-    if (streak < m) return m;
-  }
-  return milestones[milestones.length - 1];
-}
-
 function isToday(dateStr: string | undefined) {
   if (!dateStr) return false;
   return dateStr === new Date().toISOString().slice(0, 10);
@@ -70,7 +62,7 @@ function NextAchievementCard({ habits }: { habits: Habit[] }) {
   // 1. Prioritize showing a habit that just hit a milestone today
   let milestoneHabit = null;
   for (let habit of habits) {
-    const next = getNextMilestone(habit.streakCount);
+    const next = habit.getNextMilestone();
     if (
       habit.lastMilestoneAchieved === habit.streakCount &&
       isToday(habit.lastMilestoneDate)
@@ -84,7 +76,7 @@ function NextAchievementCard({ habits }: { habits: Habit[] }) {
   let minDiff = Infinity;
   if (!milestoneHabit) {
     for (let habit of habits) {
-      const next = getNextMilestone(habit.streakCount);
+      const next = habit.getNextMilestone();
       const diff = next - habit.streakCount;
       if (diff > 0 && diff < minDiff) {
         minDiff = diff;
@@ -95,7 +87,7 @@ function NextAchievementCard({ habits }: { habits: Habit[] }) {
   // 3. If all habits are at a milestone but not today, show the one that just hit it
   if (!milestoneHabit && !best) {
     for (let habit of habits) {
-      const next = getNextMilestone(habit.streakCount);
+      const next = habit.getNextMilestone();
       if (habit.streakCount === next) {
         best = { habit, next };
         break;
@@ -249,7 +241,7 @@ export default function HabitsTab() {
           <NextAchievementCard habits={manager.getHabits()} />
         </View>
         {/* Habits List */}
-        <View style={{ paddingHorizontal: 24, marginTop: 18, marginBottom: 8 }}>
+        <View style={{ paddingHorizontal: 12, marginTop: 18, marginBottom: 8 }}>
           {manager.getHabits().map((habit: Habit, i: number) => (
             <HabitCard
                 key={i}

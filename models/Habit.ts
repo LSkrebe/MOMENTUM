@@ -43,6 +43,19 @@ export class Habit {
       Animated.timing(this.animatedColor, { toValue: 0, duration: 200, useNativeDriver: false }).start();
     }
   }
+
+  getNextMilestone(): number {
+    const milestones = [7, 14, 30, 50, 100, 200, 365];
+    for (let m of milestones) {
+      if (this.streakCount < m) return m;
+    }
+    return milestones[milestones.length - 1];
+  }
+
+  getMilestoneProgress(): number {
+    const next = this.getNextMilestone();
+    return Math.min(this.streakCount / next, 1);
+  }
 }
 
 export class HabitManager {

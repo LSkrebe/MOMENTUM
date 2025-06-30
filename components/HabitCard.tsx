@@ -53,7 +53,7 @@ export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = B
   // ------------------------
 
   // Shrink width if actions are shown
-  const effectiveWidth = showActions ? bottleWidth - 80 : bottleWidth;
+  const effectiveWidth = (showActions ? bottleWidth - 80 : bottleWidth) + 25
 
   return (
     <View style={[
