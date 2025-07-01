@@ -95,11 +95,15 @@ export default function SocialScreen() {
               </GlassCard>
 
           {/* Support Opportunities - each as its own card */}
-          {socialManager.getFriendHabits().map((habit) => {
+          {socialManager.getFriendHabits().map((habit, idx) => {
             const user = socialManager.getFriends().find(u => u.id === habit.userId) as User;
+            let comment;
+            if (idx === 0) comment = "Struggling to stay motivated in the mornings. Any tips or encouragement would help!";
+            if (idx === 2) comment = "Having a tough week and could use some support to keep my meditation streak going.";
+            if (idx === 4) comment = "Yoga is new for me and I'm finding it hard to build the habit. Would love some advice!";
             return (
               <GlassCard key={habit.id} style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <UserHabitCard user={user} habit={habit} onPress={handleSupport} />
+                <UserHabitCard user={user} habit={habit} onPress={handleSupport} comment={comment} />
               </GlassCard>
             );
           })}

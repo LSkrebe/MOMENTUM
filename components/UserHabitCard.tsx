@@ -15,11 +15,12 @@ interface UserHabitCardProps {
   habit: Habit;
   onPress: (habit: Habit) => void;
   reason?: string;
+  comment?: string;
 }
 
-const UserHabitCard = ({ user, habit, onPress, reason }: UserHabitCardProps) => {
+const UserHabitCard = ({ user, habit, onPress, reason, comment }: UserHabitCardProps) => {
   return (
-    <Pressable style={styles.card} onPress={() => onPress(habit)}>
+    <Pressable onPress={() => onPress(habit)}>
       <View style={styles.header}>
         <View style={styles.userInfo}>
           {reason ? (
@@ -45,6 +46,10 @@ const UserHabitCard = ({ user, habit, onPress, reason }: UserHabitCardProps) => 
       </View>
       {/* Line break above achievement */}
       <View style={styles.lineBreak} />
+      {/* Optional comment below line break */}
+      {comment && (
+        <Text style={styles.commentText}>{comment}</Text>
+      )}
       {/* Achievement Display with Progress Bar */}
       <View style={styles.achievementContainer}>
         <Text style={styles.achievementText}>
@@ -71,14 +76,6 @@ const UserHabitCard = ({ user, habit, onPress, reason }: UserHabitCardProps) => 
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.main.card,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.main.border,
-    position: 'relative',
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -135,8 +132,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   achievementContainer: {
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 6,
+    marginBottom: 4,
     alignItems: 'center',
   },
   achievementText: {
@@ -152,12 +149,12 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 8,
+    padding: 10,
     borderRadius: 8,
     alignItems: 'center',
     backgroundColor: Colors.main.card,
     borderWidth: 1,
-    borderColor: Colors.main.accent,
+    borderColor: Colors.main.border,
   },
   supportButton: {
     marginRight: 6,
@@ -168,13 +165,14 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: Colors.main.accent,
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 15,
+    textAlign: 'center',
   },
   lineBreak: {
     borderTopWidth: 1,
     borderTopColor: Colors.main.border,
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 6,
+    marginBottom: 4,
   },
   progressBarBg: {
     height: 8,
@@ -194,6 +192,14 @@ const styles = StyleSheet.create({
     color: Colors.main.textSecondary,
     fontSize: 12,
     textAlign: 'center',
+  },
+  commentText: {
+    color: Colors.main.textSecondary,
+    fontSize: 13,
+    fontStyle: 'italic',
+    marginBottom: 12,
+    marginTop: 2,
+    textAlign: 'left',
   },
 });
 
