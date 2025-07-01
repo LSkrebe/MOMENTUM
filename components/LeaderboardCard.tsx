@@ -40,9 +40,11 @@ const LeaderboardCard = ({ users, currentUser }: { users: User[], currentUser?: 
           {showCurrentUser && (
             <>
               <View style={styles.leaderboardRow}>
-                <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={styles.leaderboardRank}>
                   <Text style={{ color: Colors.main.textSecondary, fontSize: 18 }}>...</Text>
                 </View>
+                <View style={{ flex: 1 }} />
+                <View style={{ width: 40 }} />
               </View>
               <View style={styles.leaderboardRow}> 
                 <View style={styles.leaderboardRank}>

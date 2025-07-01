@@ -8,7 +8,7 @@ const SearchCard = () => {
     <View style={styles.searchCard}>
       <TextInput
         style={styles.searchInput}
-        placeholder="Search users, habits, or categories..."
+        placeholder="Search users, habits..."
         placeholderTextColor={Colors.main.textSecondary}
         value={value}
         onChangeText={setValue}

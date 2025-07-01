@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, Pressable, Image, StyleSheet, Animated } from 'react-native';
 import Colors from '../constants/Colors';
 import { Habit } from '../models/Habit';
 import { User } from '../models/User';
@@ -19,8 +19,28 @@ interface UserHabitCardProps {
 }
 
 const UserHabitCard = ({ user, habit, onPress, reason, comment }: UserHabitCardProps) => {
+  const [supported, setSupported] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handleSupportPress = () => {
+    if (supported) return;
+    setSupported(true);
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.15,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   return (
-    <Pressable onPress={() => onPress(habit)}>
+    <View>
       <View style={styles.header}>
         <View style={styles.userInfo}>
           {reason ? (
@@ -67,11 +87,18 @@ const UserHabitCard = ({ user, habit, onPress, reason, comment }: UserHabitCardP
         <Pressable style={[styles.actionButton, styles.commentButton]} onPress={() => {/* TODO: Comment action */}}>
           <Text style={styles.actionButtonText}>Comment</Text>
         </Pressable>
-        <Pressable style={[styles.actionButton, styles.supportButton]} onPress={() => {/* TODO: Support action */}}>
-          <Text style={styles.actionButtonText}>Support</Text>
-        </Pressable>
+        <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnim }] }}>
+          <Pressable
+            style={[styles.actionButton, styles.supportButton, supported && styles.supportedButton]}
+            onPress={handleSupportPress}
+          >
+            <Text style={[styles.actionButtonText, supported && styles.supportedButtonText]}>
+              {supported ? 'Thank you!' : 'Support'}
+            </Text>
+          </Pressable>
+        </Animated.View>
       </View>
-    </Pressable>
+    </View>
   );
 };
 
@@ -200,6 +227,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginTop: 2,
     textAlign: 'left',
+  },
+  supportedButton: {
+    backgroundColor: Colors.main.accent,
+    borderColor: Colors.main.accent,
+  },
+  supportedButtonText: {
+    color: Colors.main.textPrimary,
   },
 });
 

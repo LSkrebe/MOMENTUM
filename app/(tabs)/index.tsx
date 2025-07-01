@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, Dimensions, TextInput, Keyboard, Pressable, Animated } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, Dimensions, TextInput, Keyboard, Pressable, Animated, Alert, Modal, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
 import { Habit } from '../../models/Habit';
@@ -111,10 +111,28 @@ export default function HabitsTab() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [actionedIndex, setActionedIndex] = useState<number | null>(null);
+  const [confirmUncheckIdx, setConfirmUncheckIdx] = useState<number | null>(null);
 
   const handleToggle = (index: number) => {
-    manager.toggleHabit(index);
-    setVersion(v => v + 1); // force re-render
+    const habit = manager.getHabits()[index];
+    if (habit.completedToday) {
+      setConfirmUncheckIdx(index);
+    } else {
+      manager.toggleHabit(index);
+      setVersion(v => v + 1);
+    }
+  };
+
+  const handleConfirmUncheck = () => {
+    if (confirmUncheckIdx !== null) {
+      manager.toggleHabit(confirmUncheckIdx);
+      setVersion(v => v + 1);
+      setConfirmUncheckIdx(null);
+    }
+  };
+
+  const handleCancelUncheck = () => {
+    setConfirmUncheckIdx(null);
   };
 
   const handleDeleteHabit = (index: number) => {
@@ -226,6 +244,28 @@ export default function HabitsTab() {
           </View>
         </Pressable>
       </ScrollView>
+      {/* Custom Modal for Uncheck Confirmation */}
+      <Modal
+        visible={confirmUncheckIdx !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelUncheck}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.card}>
+            <Text style={modalStyles.title}>Uncheck Habit?</Text>
+            <Text style={modalStyles.message}>Are you sure you want to uncheck this habit for today?</Text>
+            <View style={modalStyles.buttonRow}>
+              <TouchableOpacity style={modalStyles.cancelButton} onPress={handleCancelUncheck}>
+                <Text style={modalStyles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={modalStyles.uncheckButton} onPress={handleConfirmUncheck}>
+                <Text style={modalStyles.uncheckButtonText}>Uncheck</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -256,5 +296,71 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 2,
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  card: {
+    backgroundColor: Colors.main.card,
+    borderRadius: 18,
+    padding: 28,
+    width: 320,
+    alignItems: 'center',
+    shadowColor: Colors.main.accentSoft,
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  title: {
+    color: Colors.main.textPrimary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  message: {
+    color: Colors.main.textSecondary,
+    fontSize: 15,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: Colors.main.surface,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.main.border,
+  },
+  cancelButtonText: {
+    color: Colors.main.textSecondary,
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  uncheckButton: {
+    flex: 1,
+    backgroundColor: Colors.main.accent,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  uncheckButtonText: {
+    color: Colors.main.textPrimary,
+    fontWeight: 'bold',
+    fontSize: 15,
   },
 });
