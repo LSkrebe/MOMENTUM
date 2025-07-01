@@ -7,8 +7,6 @@ export class User {
   stats?: {
     habitsCompleted: number;
     longestStreak: number;
-    supportAccuracy: number;
-    habitCoinsEarned: number;
   };
   customizations?: {
     titleColor: string;

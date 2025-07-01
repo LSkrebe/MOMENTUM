@@ -23,17 +23,6 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ user }) => (
           <View style={[styles.progressBar, { width: `${Math.min((user.stats?.longestStreak || 0) / 100, 1) * 100}%` }]} />
         </View>
       </View>
-      <View style={styles.statBlock}>
-        <Text style={styles.statNumber}>{user.stats?.supportAccuracy}%</Text>
-        <Text style={styles.statLabel}>Accuracy</Text>
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBar, { width: `${Math.min((user.stats?.supportAccuracy || 0) / 100, 1) * 100}%`, backgroundColor: Colors.main.accent }]} />
-        </View>
-      </View>
-      <View style={styles.statBlock}>
-        <Text style={styles.statNumber}>{HABITCOIN_SYMBOL}{user.stats?.habitCoinsEarned}</Text>
-        <Text style={styles.statLabel}>Earned</Text>
-      </View>
     </View>
   </View>
 );

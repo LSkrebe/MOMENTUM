@@ -7,7 +7,10 @@ import Typography from '../../constants/Typography';
 import { HABITCOIN_SYMBOL } from '../../constants/Currency';
 import ProfileUser from '../../models/ProfileUser';
 import CompleteProfileCard from '../../components/CompleteProfileCard';
-import StatsCard from '../../components/StatsCard';
+import ShareCard from '../../components/ShareCard';
+import LeaderboardManager from '../../models/LeaderboardManager';
+import LeaderboardCard from '../../components/LeaderboardCard';
+import { User } from '../../models/User';
 
 // Initialize user data
 const user = new ProfileUser({
@@ -24,28 +27,42 @@ const user = new ProfileUser({
   }
 });
 
+// Helper to map ProfileUser to User
+function mapProfileUserToUser(profileUser: ProfileUser): User {
+  return new User({
+    id: profileUser.name, // or another unique identifier
+    name: profileUser.name,
+    profileImage: profileUser.avatar,
+    bio: profileUser.title,
+    stats: {
+      habitsCompleted: profileUser.habitsCompleted,
+      longestStreak: profileUser.longestStreak,
+    },
+  });
+}
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const leaderboardManager = new LeaderboardManager();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Sticky Header */}
+      <View style={[styles.header, { backgroundColor: Colors.main.accent, position: 'absolute', top: insets.top, left: 0, right: 0, zIndex: 10 }]}>
+        <View style={styles.headerRow}>
+          <Image source={require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>PROFILE</Text>
+          </View>
+          <View style={{ width: 32, height: 32 }} />
+        </View>
+      </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom }}
+        contentContainerStyle={{ paddingTop: 70 + insets.top, paddingBottom: insets.bottom }}
       >
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: Colors.main.accent }]}>
-          <View style={styles.headerRow}>
-            <Image source={require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>PROFILE</Text>
-            </View>
-            <View style={{ width: 32, height: 32 }} />
-          </View>
-        </View>
-
         {/* Profile Content */}
-        <View style={{ paddingHorizontal: 12, marginTop: 18 }}>
+        <View style={{ paddingHorizontal: 12, marginTop: 0 }}>
           {/* Complete Profile Card */}
           <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
             <CompleteProfileCard user={user} />
@@ -53,8 +70,12 @@ export default function ProfileScreen() {
 
           {/* Stats Card */}
           <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-            <Text style={styles.statsTitle}>PERFORMANCE STATS</Text>
-            <StatsCard user={user} />
+            <ShareCard />
+          </GlassCard>
+
+          {/* Top Performers List */}
+          <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
+            <LeaderboardCard users={leaderboardManager.getLeaderboardUsers()} currentUser={mapProfileUserToUser(user)} />
           </GlassCard>
         </View>
       </ScrollView>
@@ -71,7 +92,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingBottom: 18,
     paddingTop: 8,
-    marginBottom: 8,
+    marginBottom: 0,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     shadowColor: Colors.main.accentSoft,

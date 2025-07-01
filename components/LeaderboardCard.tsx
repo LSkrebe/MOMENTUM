@@ -10,30 +10,60 @@ function getImageSource(img: any) {
   return require('../assets/images/icon.png');
 }
 
-const LeaderboardCard = ({ users }: { users: User[] }) => (
-  <View>
-    <Text style={styles.leaderboardTitle}>TOP PERFORMERS</Text>
-    <View style={styles.leaderboardCard}>
-      <View style={{ gap: 16 }}>
-        {users.map((user, index) => (
-          <View key={index} style={styles.leaderboardRow}>
-            <View style={styles.leaderboardRank}>
-              <Text style={styles.rankNumber}>{index + 1}</Text>
-            </View>
-            <View style={styles.leaderboardUserInfo}>
-              <Image source={getImageSource(user.profileImage)} style={styles.leaderboardAvatar} />
-              <View style={styles.leaderboardUserDetails}>
-                <Text style={styles.leaderboardName}>{user.name}</Text>
-                <Text style={styles.leaderboardUserTitle}>{user.bio ?? 'Performer'}</Text>
+const LeaderboardCard = ({ users, currentUser }: { users: User[], currentUser?: User }) => {
+  // Find current user index
+  const userIndex = currentUser ? users.findIndex(u => u.name === currentUser.name) : -1;
+  const isInTop10 = userIndex > -1 && userIndex < 10;
+  const topUsers = users.slice(0, 10);
+  const showCurrentUser = currentUser && !isInTop10 && userIndex > -1;
+
+  return (
+    <View>
+      <Text style={styles.leaderboardTitle}>TOP PERFORMERS</Text>
+      <View style={styles.leaderboardCard}>
+        <View style={{ gap: 16 }}>
+          {topUsers.map((user, index) => (
+            <View key={index} style={styles.leaderboardRow}>
+              <View style={styles.leaderboardRank}>
+                <Text style={styles.rankNumber}>{index + 1}</Text>
               </View>
+              <View style={styles.leaderboardUserInfo}>
+                <Image source={getImageSource(user.profileImage)} style={styles.leaderboardAvatar} />
+                <View style={styles.leaderboardUserDetails}>
+                  <Text style={styles.leaderboardName}>{user.name}</Text>
+                  <Text style={styles.leaderboardUserTitle}>{user.bio ?? 'Performer'}</Text>
+                </View>
+              </View>
+              <Text style={styles.leaderboardValue}>{user.stats?.longestStreak ?? 0}D</Text>
             </View>
-            <Text style={styles.leaderboardValue}>{user.stats?.longestStreak ?? 0}D</Text>
-          </View>
-        ))}
+          ))}
+          {showCurrentUser && (
+            <>
+              <View style={styles.leaderboardRow}>
+                <View style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ color: Colors.main.textSecondary, fontSize: 18 }}>...</Text>
+                </View>
+              </View>
+              <View style={styles.leaderboardRow}> 
+                <View style={styles.leaderboardRank}>
+                  <Text style={styles.rankNumber}>{userIndex + 1}</Text>
+                </View>
+                <View style={styles.leaderboardUserInfo}>
+                  <Image source={getImageSource(currentUser.profileImage)} style={styles.leaderboardAvatar} />
+                  <View style={styles.leaderboardUserDetails}>
+                    <Text style={styles.leaderboardName}>{currentUser.name}</Text>
+                    <Text style={styles.leaderboardUserTitle}>{currentUser.bio ?? 'You'}</Text>
+                  </View>
+                </View>
+                <Text style={styles.leaderboardValue}>{currentUser.stats?.longestStreak ?? 0}D</Text>
+              </View>
+            </>
+          )}
+        </View>
       </View>
     </View>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   leaderboardTitle: {

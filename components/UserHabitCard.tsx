@@ -43,6 +43,29 @@ const UserHabitCard = ({ user, habit, onPress, reason }: UserHabitCardProps) => 
           </View>
         )}
       </View>
+      {/* Line break above achievement */}
+      <View style={styles.lineBreak} />
+      {/* Achievement Display with Progress Bar */}
+      <View style={styles.achievementContainer}>
+        <Text style={styles.achievementText}>
+          Next Achievement: {habit.getNextMilestone()} Day Streak
+        </Text>
+        <View style={styles.progressBarBg}>
+          <View style={[styles.progressBarFill, { width: `${Math.min(habit.streakCount / habit.getNextMilestone(), 1) * 100}%` }]} />
+        </View>
+        <Text style={styles.progressBarLabel}>
+          {habit.streakCount}D → {habit.getNextMilestone()}D ({habit.getNextMilestone() - habit.streakCount} days left)
+        </Text>
+      </View>
+      {/* Action Buttons */}
+      <View style={styles.actionsRow}>
+        <Pressable style={[styles.actionButton, styles.commentButton]} onPress={() => {/* TODO: Comment action */}}>
+          <Text style={styles.actionButtonText}>Comment</Text>
+        </Pressable>
+        <Pressable style={[styles.actionButton, styles.supportButton]} onPress={() => {/* TODO: Support action */}}>
+          <Text style={styles.actionButtonText}>Support</Text>
+        </Pressable>
+      </View>
     </Pressable>
   );
 };
@@ -110,6 +133,67 @@ const styles = StyleSheet.create({
     color: Colors.main.accent,
     fontSize: 15,
     fontWeight: 'bold',
+  },
+  achievementContainer: {
+    marginTop: 12,
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  achievementText: {
+    color: Colors.main.accent,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: Colors.main.card,
+    borderWidth: 1,
+    borderColor: Colors.main.accent,
+  },
+  supportButton: {
+    marginRight: 6,
+  },
+  commentButton: {
+    marginLeft: 6,
+  },
+  actionButtonText: {
+    color: Colors.main.accent,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  lineBreak: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.main.border,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: Colors.main.surface,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginTop: 6,
+    marginBottom: 4,
+    width: '100%',
+  },
+  progressBarFill: {
+    height: 8,
+    backgroundColor: Colors.main.accent,
+    borderRadius: 4,
+  },
+  progressBarLabel: {
+    color: Colors.main.textSecondary,
+    fontSize: 12,
+    textAlign: 'center',
   },
 });
 

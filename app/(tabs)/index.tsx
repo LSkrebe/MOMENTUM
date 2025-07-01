@@ -6,11 +6,10 @@ import { Habit } from '../../models/Habit';
 import { HabitManager } from '../../models/Habit';
 import HabitCard from '../../components/HabitCard';
 import { MotivationalCard } from '../../components/MotivationalCard';
-import HeaderBar from '../../components/HeaderBar';
-import { useFocusEffect } from '@react-navigation/native';
 import { GlassCard } from '../../components/GlassCard';
 import { isToday } from '../../utils/date';
 import { MotivationalMessageManager } from '../../models/MotivationalMessage';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 const BOTTLE_CONTAINER_PADDING = 24;
@@ -70,22 +69,16 @@ function NextAchievementCard({ habits, manager }: { habits: Habit[], manager: an
   }, [progress, habit.streakCount, habit.completedToday, habit.lastMilestoneAchieved, habit.lastMilestoneDate]);
 
   return (
-    <View style={{
-      backgroundColor: Colors.main.card,
-      borderRadius: 12,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: Colors.main.border,
-      marginBottom: 18,
-      shadowColor: Colors.main.accentSoft,
-      shadowOpacity: 0.10,
-      shadowRadius: 16,
-      elevation: 4,
-      overflow: 'hidden',
-    }}>
-      <Text style={{ color: Colors.main.textPrimary, fontWeight: 'bold', fontSize: 15, marginBottom: 6 }}>
-        Next Achievement
-      </Text>
+    <View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <Text style={{ color: Colors.main.textPrimary, fontWeight: 'bold', fontSize: 15 }}>
+          Next Achievement
+        </Text>
+        <Text style={{ color: Colors.main.accent, fontWeight: 'bold', fontSize: 13 }}>
+          {/* Placeholder supporters count, replace with habit.supporters if available */}
+          123 Supporters
+        </Text>
+      </View>
       <Text style={{ color: Colors.main.textSecondary, fontSize: 13, marginBottom: 8 }}>
         {habit.title}: {habit.streakCount}D → {next}D
       </Text>
@@ -165,7 +158,6 @@ export default function HabitsTab() {
     }
   };
 
-  // Close action icons when switching tabs
   useFocusEffect(
     React.useCallback(() => {
       return () => {
@@ -176,48 +168,62 @@ export default function HabitsTab() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}> 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom }}>
-                <Pressable
+      {/* Sticky Header */}
+      <View style={[styles.header, { backgroundColor: Colors.main.accent, position: 'absolute', top: insets.top, left: 0, right: 0, zIndex: 10 }]}> 
+        <View style={styles.headerRow}>
+          <Image source={require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>HABITS</Text>
+          </View>
+          <View style={{ width: 32, height: 32 }} />
+        </View>
+      </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 70 + insets.top, paddingBottom: insets.bottom }}
+      >
+        <Pressable
           onPress={() => { if (actionedIndex !== null) setActionedIndex(null); }}
           style={{ flex: 1 }}
         >
-        <HeaderBar title="HABITS" />
-        {/* Next Achievement Card */}
-        <View style={{ paddingHorizontal: 12, marginTop: 18 }}>
-          <NextAchievementCard habits={manager.getHabits()} manager={manager} />
-        </View>
-        {/* Habits List */}
-        <View style={{ paddingHorizontal: 12, marginTop: 18, marginBottom: 8 }}>
-          {manager.getHabits().map((habit: Habit, i: number) => (
-            <HabitCard
-                key={i}
-              habit={habit}
-              onToggle={() => handleToggle(i)}
-              bottleWidth={BOTTLE_WIDTH}
-              editable={editingIndex === i}
-              inputValue={inputValue}
-              onInputChange={handleInputChange}
-              onInputBlur={() => handleInputBlur(i)}
-              onLongPress={() => setActionedIndex(i)}
-              showActions={actionedIndex === i}
-              onDelete={() => handleDeleteHabit(i)}
-              onEdit={() => handleEditHabit(i)}
-              />
-            ))}
-          {/* Add Habit Button UI */}
-          <View style={{ marginTop: 8, alignItems: 'center' }}>
-            <Text
-              style={{ color: Colors.main.accent, fontSize: 14, fontWeight: 'bold' }}
-              onPress={handleAddHabit}
-            >
-              Add Habit
-            </Text>
+          <View style={{ paddingHorizontal: 12, marginTop: 0 }}>
+            {/* Next Achievement Card */}
+            <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
+              <NextAchievementCard habits={manager.getHabits()} manager={manager} />
+            </GlassCard>
+            {/* Habits List */}
+            <View style={{ marginTop: 18, marginBottom: 8 }}>
+              {manager.getHabits().map((habit: Habit, i: number) => (
+                <HabitCard
+                  key={i}
+                  habit={habit}
+                  onToggle={() => handleToggle(i)}
+                  bottleWidth={BOTTLE_WIDTH}
+                  editable={editingIndex === i}
+                  inputValue={inputValue}
+                  onInputChange={handleInputChange}
+                  onInputBlur={() => handleInputBlur(i)}
+                  onLongPress={() => setActionedIndex(i)}
+                  showActions={actionedIndex === i}
+                  onDelete={() => handleDeleteHabit(i)}
+                  onEdit={() => handleEditHabit(i)}
+                />
+              ))}
+              {/* Add Habit Button UI */}
+              <View style={{ marginTop: 8, alignItems: 'center' }}>
+                <Text
+                  style={{ color: Colors.main.accent, fontSize: 14, fontWeight: 'bold' }}
+                  onPress={handleAddHabit}
+                >
+                  Add Habit
+                </Text>
+              </View>
+            </View>
+            {/* Motivational Card from a Supporter */}
+            <GlassCard style={{ backgroundColor: Colors.main.surface, marginTop: 18, marginBottom: 18 }}>
+              <MotivationalCard {...motivationalMessageManager.getMessage()} />
+            </GlassCard>
           </View>
-        </View>
-        {/* Motivational Card from a Supporter */}
-        <View style={{ paddingHorizontal: 12, marginTop: 18, marginBottom: 18 }}>
-          <MotivationalCard {...motivationalMessageManager.getMessage()} />
-        </View>
         </Pressable>
       </ScrollView>
     </View>
@@ -228,5 +234,27 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.main.background,
+  },
+  header: {
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    paddingTop: 8,
+    marginBottom: 0,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    shadowColor: Colors.main.accentSoft,
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    letterSpacing: 2,
   },
 });

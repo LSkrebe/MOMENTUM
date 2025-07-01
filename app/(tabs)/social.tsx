@@ -27,8 +27,6 @@ import TabButton from '../../components/TabButton';
 
 export default function SocialScreen() {
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams();
-  const [selectedTab, setSelectedTab] = useState(params.tab === 'portfolio' ? 'portfolio' : 'discover');
   const [userBalance] = useState(1085.25);
   
   // Instantiate managers
@@ -63,112 +61,48 @@ export default function SocialScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-    <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom }}
-      >
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: Colors.main.accent }]}>
+      {/* Sticky Header */}
+      <View style={[styles.header, { backgroundColor: Colors.main.accent, position: 'absolute', top: insets.top, left: 0, right: 0, zIndex: 10 }]}> 
           <View style={styles.headerRow}>
             <Image source={require('../../assets/images/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>SUPPORT</Text>
+            <Text style={[styles.headerTitle, { color: Colors.main.background, textAlign: 'center' }]}>SUPPORT</Text>
             </View>
             <View style={{ width: 32, height: 32 }} />
           </View>
-        </View>
-
-        {/* Tab Navigation */}
-        <View style={{ paddingHorizontal: 12, marginTop: 18 }}>
-          <View style={styles.tabContainer}>
-            <TabButton 
-              title="DISCOVER" 
-              isActive={selectedTab === 'discover'} 
-              onPress={() => setSelectedTab('discover')} 
-              style={styles.tabButton}
-              textStyle={styles.tabText}
-              activeStyle={styles.activeTabButton}
-              activeTextStyle={styles.activeTabText}
-            />
-            <TabButton 
-              title="TRENDING" 
-              isActive={selectedTab === 'trending'} 
-              onPress={() => setSelectedTab('trending')} 
-              style={styles.tabButton}
-              textStyle={styles.tabText}
-              activeStyle={styles.activeTabButton}
-              activeTextStyle={styles.activeTabText}
-            />
           </View>
-        </View>
-
-        {/* Tab Content */}
-        <View style={{ paddingHorizontal: 12, marginTop: 18 }}>
-          {selectedTab === 'discover' && (
-            <>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 70 + insets.top, paddingBottom: insets.bottom }}
+      >
+        {/* Main Content - no tabs */}
+        <View style={{ paddingHorizontal: 12, marginTop: 0 }}>
               {/* Search Card */}
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <SearchCard />
               </GlassCard>
 
-              {/* Recommendations */}
-              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <Text style={styles.sectionTitle}>RECOMMENDATIONS</Text>
-                <View style={{ gap: 12 }}>
-                  {socialManager.getRecommendations().map((user, i) => {
-                    const habit = socialManager.getFriendHabits().find(h => h.userId === user.id) ?? new Habit({ title: 'Habit' });
-                    return (
-                      <UserHabitCard key={user.id || i} user={user} habit={habit} onPress={handleSupport} reason="Consistent streaks" />
-                    );
-                  })}
-                </View>
-              </GlassCard>
-
-              {/* Categories */}
-              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <Text style={styles.sectionTitle}>TRENDING CATEGORIES</Text>
-                <View style={styles.categoriesGrid}>
-                  {socialManager.getTrendingCategories().map((category, index) => (
-                    <CategoryCard key={index} category={category} />
-                  ))}
-                </View>
-              </GlassCard>
-
-              {/* Investment Opportunities */}
-              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <Text style={styles.sectionTitle}>SUPPORT OPPORTUNITIES</Text>
-                <View style={{ gap: 12 }}>
-                  {socialManager.getFriendHabits().map((habit) => {
-                    const user = socialManager.getFriends().find(u => u.id === habit.userId) as User;
-                    return (
-                      <UserHabitCard key={habit.id} user={user} habit={habit} onPress={handleSupport} />
-                    );
-                  })}
-                </View>
-              </GlassCard>
-            </>
-          )}
-
-          {selectedTab === 'trending' && (
-            <>
-              {/* Featured Profile */}
+          {/* Featured Performer */}
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <Text style={styles.sectionTitle}>FEATURED PERFORMER</Text>
-                <FeaturedProfileCard user={socialManager.getFeaturedProfile()} />
+            <FeaturedProfileCard user={socialManager.getFeaturedProfile()} />
               </GlassCard>
 
               {/* Success Story */}
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <Text style={styles.sectionTitle}>SUCCESS STORY</Text>
-                <SuccessStoryCard story={socialManager.getSuccessStory()} />
+            <SuccessStoryCard story={socialManager.getSuccessStory()} />
               </GlassCard>
 
-              {/* Leaderboard */}
-              <GlassCard style={{ backgroundColor: Colors.main.surface }}>
-                <LeaderboardCard users={leaderboardManager.getLeaderboardUsers()} />
+          {/* Support Opportunities - each as its own card */}
+          {socialManager.getFriendHabits().map((habit) => {
+            const user = socialManager.getFriends().find(u => u.id === habit.userId) as User;
+            return (
+              <GlassCard key={habit.id} style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
+                <UserHabitCard user={user} habit={habit} onPress={handleSupport} />
               </GlassCard>
-            </>
-          )}
+            );
+          })}
         </View>
     </ScrollView>
     </View>
@@ -184,7 +118,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingBottom: 18,
     paddingTop: 8,
-    marginBottom: 8,
+    marginBottom: 0,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     shadowColor: Colors.main.accentSoft,
