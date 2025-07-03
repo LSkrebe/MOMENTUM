@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import Colors from '../constants/Colors';
 
-const SearchCard = () => {
-  const [value, setValue] = useState('');
+interface SearchCardProps {
+  value: string;
+  onChangeText: (text: string) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
+}
+
+const SearchCard: React.FC<SearchCardProps> = ({ value, onChangeText, onFocus, onBlur }) => {
   return (
     <View style={styles.searchCard}>
       <TextInput
@@ -11,7 +17,9 @@ const SearchCard = () => {
         placeholder="Search users, habits..."
         placeholderTextColor={Colors.main.textSecondary}
         value={value}
-        onChangeText={setValue}
+        onChangeText={onChangeText}
+        onFocus={onFocus}
+        onBlur={onBlur}
       />
     </View>
   );

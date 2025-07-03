@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, ImageSourcePropType } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Image, Animated, ImageSourcePropType, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { GlassCard } from '../../components/GlassCard';
@@ -40,6 +40,12 @@ export default function SocialScreen() {
   const [displayMyHabits, setDisplayMyHabits] = useState(450);
   const [displaySupportValue, setDisplaySupportValue] = useState(535);
 
+  const [search, setSearch] = useState('');
+  const [commentingHabitId, setCommentingHabitId] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState('');
+  const [commentedHabits, setCommentedHabits] = useState<string[]>([]);
+  const commentInputRef = useRef<TextInput>(null);
+
   useEffect(() => {
     const h = animatedMyHabits.addListener(({ value }) => setDisplayMyHabits(value));
     const s = animatedSupportValue.addListener(({ value }) => setDisplaySupportValue(value));
@@ -49,6 +55,15 @@ export default function SocialScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    if (commentingHabitId && commentInputRef.current) {
+      // Timeout ensures focus after modal animation
+      setTimeout(() => {
+        commentInputRef.current?.focus();
+      }, 100);
+    }
+  }, [commentingHabitId]);
+
   const handleSupport = (habit: Habit | User) => {
     // TODO: Implement support logic
     if (habit instanceof Habit) {
@@ -57,6 +72,37 @@ export default function SocialScreen() {
     } else if (habit instanceof User) {
       console.log('Supporting user:', habit.name);
     }
+  };
+
+  const allHabits = socialManager.getFriendHabits();
+  const allUsers = socialManager.getFriends();
+  const isSearching = search.trim() !== '';
+  const filteredHabits = isSearching
+    ? allHabits.filter(habit => {
+        const user = allUsers.find(u => u.id === habit.userId);
+        const userName = user?.name?.toLowerCase() || '';
+        const habitTitle = habit.title?.toLowerCase() || '';
+        const q = search.toLowerCase();
+        return userName.includes(q) || habitTitle.includes(q);
+      })
+    : allHabits;
+
+  const handleOpenComment = (habit: Habit) => {
+    setCommentingHabitId(habit.id || '');
+    setCommentText('');
+  };
+
+  const handleSendComment = () => {
+    if (commentingHabitId) {
+      setCommentedHabits(prev => [...prev, commentingHabitId]);
+    }
+    setCommentingHabitId(null);
+    setCommentText('');
+  };
+
+  const handleCancelComment = () => {
+    setCommentingHabitId(null);
+    setCommentText('');
   };
 
   return (
@@ -79,36 +125,84 @@ export default function SocialScreen() {
         <View style={{ paddingHorizontal: 12, marginTop: 0 }}>
               {/* Search Card */}
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <SearchCard />
+                <SearchCard
+                  value={search}
+                  onChangeText={setSearch}
+                />
               </GlassCard>
 
-          {/* Featured Performer */}
+          {/* Featured Performer and Success Story - hide when searching */}
+          {!isSearching && (
+            <>
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <Text style={styles.sectionTitle}>FEATURED PERFORMER</Text>
-            <FeaturedProfileCard user={socialManager.getFeaturedProfile()} />
+                <FeaturedProfileCard user={socialManager.getFeaturedProfile()} />
               </GlassCard>
-
-              {/* Success Story */}
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <Text style={styles.sectionTitle}>SUCCESS STORY</Text>
-            <SuccessStoryCard story={socialManager.getSuccessStory()} />
+                <SuccessStoryCard story={socialManager.getSuccessStory()} />
               </GlassCard>
+            </>
+          )}
 
           {/* Support Opportunities - each as its own card */}
-          {socialManager.getFriendHabits().map((habit, idx) => {
-            const user = socialManager.getFriends().find(u => u.id === habit.userId) as User;
+          {filteredHabits.map((habit, idx) => {
+            const user = allUsers.find(u => u.id === habit.userId) as User;
             let comment;
             if (idx === 0) comment = "Struggling to stay motivated in the mornings. Any tips or encouragement would help!";
             if (idx === 2) comment = "Having a tough week and could use some support to keep my meditation streak going.";
             if (idx === 4) comment = "Yoga is new for me and I'm finding it hard to build the habit. Would love some advice!";
             return (
               <GlassCard key={habit.id} style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <UserHabitCard user={user} habit={habit} onPress={handleSupport} comment={comment} />
+                <UserHabitCard
+                  user={user}
+                  habit={habit}
+                  onPress={handleSupport}
+                  comment={comment}
+                  onComment={() => handleOpenComment(habit)}
+                  commented={commentedHabits.includes(habit.id || '')}
+                />
               </GlassCard>
             );
           })}
         </View>
     </ScrollView>
+    {/* Comment Modal */}
+    <Modal
+      visible={!!commentingHabitId}
+      transparent
+      animationType="fade"
+      onRequestClose={handleCancelComment}
+    >
+      <View style={commentModalStyles.overlay}>
+        <View style={commentModalStyles.card}>
+          <Text style={commentModalStyles.title}>Write a Support Comment</Text>
+          <TextInput
+            ref={commentInputRef}
+            style={commentModalStyles.input}
+            placeholder="Type your message..."
+            placeholderTextColor={Colors.main.textSecondary}
+            value={commentText}
+            onChangeText={setCommentText}
+            multiline
+            textAlignVertical="top"
+            textAlign="left"
+          />
+          <View style={commentModalStyles.buttonRow}>
+            <TouchableOpacity style={commentModalStyles.cancelButton} onPress={handleCancelComment}>
+              <Text style={commentModalStyles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[commentModalStyles.sendButton, { opacity: commentText.trim() ? 1 : 0.5 }]}
+              onPress={handleSendComment}
+              disabled={!commentText.trim()}
+            >
+              <Text style={commentModalStyles.sendButtonText}>Send</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
     </View>
   );
 }
@@ -664,5 +758,81 @@ const styles = StyleSheet.create({
     color: Colors.main.textPrimary,
     fontSize: 12,
     fontWeight: '600',
+  },
+});
+
+const commentModalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  card: {
+    backgroundColor: Colors.main.card,
+    borderRadius: 18,
+    padding: 28,
+    width: 320,
+    alignItems: 'center',
+    shadowColor: Colors.main.accentSoft,
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: Colors.main.border,
+  },
+  title: {
+    color: Colors.main.textPrimary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  input: {
+    width: '100%',
+    minHeight: 100,
+    backgroundColor: Colors.main.surface,
+    color: Colors.main.textPrimary,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.main.border,
+    padding: 12,
+    fontSize: 15,
+    marginBottom: 18,
+    textAlignVertical: 'top',
+    textAlign: 'left',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: Colors.main.surface,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.main.border,
+  },
+  cancelButtonText: {
+    color: Colors.main.textSecondary,
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  sendButton: {
+    flex: 1,
+    backgroundColor: Colors.main.accent,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  sendButtonText: {
+    color: Colors.main.textPrimary,
+    fontWeight: 'bold',
+    fontSize: 15,
   },
 }); 

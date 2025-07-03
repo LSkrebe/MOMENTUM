@@ -16,11 +16,14 @@ interface UserHabitCardProps {
   onPress: (habit: Habit) => void;
   reason?: string;
   comment?: string;
+  onComment?: () => void;
+  commented?: boolean;
 }
 
-const UserHabitCard = ({ user, habit, onPress, reason, comment }: UserHabitCardProps) => {
+const UserHabitCard = ({ user, habit, onPress, reason, comment, onComment, commented }: UserHabitCardProps) => {
   const [supported, setSupported] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const commentScaleAnim = useRef(new Animated.Value(1)).current;
 
   const handleSupportPress = () => {
     if (supported) return;
@@ -38,6 +41,62 @@ const UserHabitCard = ({ user, habit, onPress, reason, comment }: UserHabitCardP
       }),
     ]).start();
   };
+
+  // Called by parent after comment is sent
+  React.useEffect(() => {
+    if (typeof onComment === 'function' && commented) {
+      // Reset commented after a short delay if needed, or keep it true
+    }
+  }, [commented, onComment]);
+
+  React.useEffect(() => {
+    if (commented && !supported) {
+      Animated.sequence([
+        Animated.timing(commentScaleAnim, {
+          toValue: 1.15,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(commentScaleAnim, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    if (supported && !commented) {
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.15,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    if (supported && commented) {
+      // Animate both for the merged button
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.15,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [commented, supported]);
+
+  // Helper: should we show merged button?
+  const showMerged = supported && commented;
 
   return (
     <View>
@@ -84,19 +143,40 @@ const UserHabitCard = ({ user, habit, onPress, reason, comment }: UserHabitCardP
       </View>
       {/* Action Buttons */}
       <View style={styles.actionsRow}>
-        <Pressable style={[styles.actionButton, styles.commentButton]} onPress={() => {/* TODO: Comment action */}}>
-          <Text style={styles.actionButtonText}>Comment</Text>
-        </Pressable>
-        <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnim }] }}>
-          <Pressable
-            style={[styles.actionButton, styles.supportButton, supported && styles.supportedButton]}
-            onPress={handleSupportPress}
-          >
-            <Text style={[styles.actionButtonText, supported && styles.supportedButtonText]}>
-              {supported ? 'Thank you!' : 'Support'}
-            </Text>
-          </Pressable>
-        </Animated.View>
+        {showMerged ? (
+          <Animated.View style={{ flex: 2, width: '100%', transform: [{ scale: scaleAnim }] }}>
+            <View style={[styles.actionButton, styles.mergedButton, styles.supportedButton, { width: '100%', alignSelf: 'center' }]}>
+              <Text style={[styles.actionButtonText, styles.supportedButtonText]}>Thank you!</Text>
+            </View>
+          </Animated.View>
+        ) : (
+          <>
+            <Animated.View style={{ flex: 1, transform: [{ scale: commentScaleAnim }] }}>
+              <Pressable
+                style={[styles.actionButton, styles.commentButton, commented && styles.supportedButton]}
+                onPress={() => {
+                  if (!commented && onComment) onComment();
+                }}
+                disabled={commented}
+              >
+                <Text style={[styles.actionButtonText, commented && !supported && styles.supportedButtonText]}>
+                  {commented && !supported ? 'Thank you!' : 'Comment'}
+                </Text>
+              </Pressable>
+            </Animated.View>
+            <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnim }] }}>
+              <Pressable
+                style={[styles.actionButton, styles.supportButton, supported && styles.supportedButton]}
+                onPress={handleSupportPress}
+                disabled={supported}
+              >
+                <Text style={[styles.actionButtonText, supported && !commented && styles.supportedButtonText]}>
+                  {supported && !commented ? 'Thank you!' : 'Support'}
+                </Text>
+              </Pressable>
+            </Animated.View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -234,6 +314,10 @@ const styles = StyleSheet.create({
   },
   supportedButtonText: {
     color: Colors.main.textPrimary,
+  },
+  mergedButton: {
+    marginLeft: 0,
+    marginRight: 0,
   },
 });
 
