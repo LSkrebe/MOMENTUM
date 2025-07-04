@@ -24,6 +24,8 @@ import PortfolioCard from '../../components/PortfolioCard';
 import SupporterCard from '../../components/SupporterCard';
 import { getRiskColor, getImageSource } from '../../utils/socialUtils';
 import TabButton from '../../components/TabButton';
+import { useFocusEffect } from 'expo-router';
+import SupportEventEmitter from '../../components/SupportEventEmitter';
 
 export default function SocialScreen() {
   const insets = useSafeAreaInsets();
@@ -123,7 +125,7 @@ export default function SocialScreen() {
       >
         {/* Main Content - no tabs */}
         <View style={{ paddingHorizontal: 12, marginTop: 0 }}>
-              {/* Search Card */}
+          {/* Search Card */}
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <SearchCard
                   value={search}
@@ -135,12 +137,12 @@ export default function SocialScreen() {
           {!isSearching && (
             <>
               <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <Text style={styles.sectionTitle}>FEATURED PERFORMER</Text>
-                <FeaturedProfileCard user={socialManager.getFeaturedProfile()} />
-              </GlassCard>
-              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
                 <Text style={styles.sectionTitle}>SUCCESS STORY</Text>
                 <SuccessStoryCard story={socialManager.getSuccessStory()} />
+              </GlassCard>
+              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
+                <Text style={styles.sectionTitle}>FEATURED PERFORMER</Text>
+                <FeaturedProfileCard user={socialManager.getFeaturedProfile()} />
               </GlassCard>
             </>
           )}
