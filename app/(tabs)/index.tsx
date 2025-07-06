@@ -10,6 +10,9 @@ import { GlassCard } from '../../components/GlassCard';
 import { isToday } from '../../utils/date';
 import { MotivationalMessageManager } from '../../models/MotivationalMessage';
 import { useFocusEffect } from '@react-navigation/native';
+import ShareStoryModal from '../../components/ShareStoryModal';
+import SupportEventEmitter from '../../components/SupportEventEmitter';
+import NeedSupportModal from '../../components/NeedSupportModal';
 
 const { width } = Dimensions.get('window');
 const BOTTLE_CONTAINER_PADDING = 24;
@@ -37,7 +40,7 @@ const motivationalMessageManager = new MotivationalMessageManager({
   message: "Keep going! Your consistency inspires me every day. Proud to support your journey!"
 });
 
-function NextAchievementCard({ habits, manager }: { habits: Habit[], manager: any }) {
+function NextAchievementCard({ habits, manager, onShareStory }: { habits: Habit[], manager: any, onShareStory: (habitId: string) => void }) {
   if (!habits.length) return null;
   const show = manager.getNextAchievementHabit();
   if (!show) return null;
@@ -93,12 +96,32 @@ function NextAchievementCard({ habits, manager }: { habits: Habit[], manager: an
         </Animated.View>
       </View>
       <View style={{ minHeight: 18 }}>
-        <Animated.Text style={{ color: Colors.main.textSecondary, fontSize: 12, opacity: progress === 1 ? messageOpacity : 0, marginBottom: 2, position: 'absolute', left: 0, right: 0 }}>
-          Milestone achieved!
-        </Animated.Text>
-        <Text style={{ color: Colors.main.textSecondary, fontSize: 12, opacity: progress === 1 ? 0 : 1, marginBottom: 2 }}>
-          {next - habit.streakCount} days to next milestone
-        </Text>
+        <View style={{ position: 'relative', minHeight: 18 }}>
+          <Animated.View style={{ opacity: progress === 1 ? messageOpacity : 0, position: 'absolute', left: 0, right: 0, top: 0, zIndex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 0 }}>
+            <Text style={{ color: Colors.main.textSecondary, fontSize: 12 }}>
+              Milestone achieved!
+            </Text>
+            <TouchableOpacity 
+              onPress={() => onShareStory(habit.id || '')}
+              style={{ paddingVertical: 8, paddingHorizontal: 0 }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ color: Colors.main.accent, fontSize: 12, textDecorationLine: 'underline' }}>
+                Share Story
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+          <View style={{ opacity: progress === 1 ? 0 : 1, position: 'absolute', left: 0, right: 0, top: 0, zIndex: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 0 }}>
+            <Text style={{ color: Colors.main.textSecondary, fontSize: 12 }}>
+              {next - habit.streakCount} days to next milestone
+            </Text>
+            <View style={{ paddingVertical: 8, paddingHorizontal: 0 }}>
+              <Text style={{ color: Colors.main.textSecondary, fontSize: 12, opacity: 0 }}>
+                Share Story
+              </Text>
+            </View>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -112,6 +135,17 @@ export default function HabitsTab() {
   const [inputValue, setInputValue] = useState('');
   const [actionedIndex, setActionedIndex] = useState<number | null>(null);
   const [confirmUncheckIdx, setConfirmUncheckIdx] = useState<number | null>(null);
+  const [confirmDeleteIdx, setConfirmDeleteIdx] = useState<number | null>(null);
+
+  // Share Story Modal State
+  const [shareStoryVisible, setShareStoryVisible] = useState(false);
+  const [selectedStoryHabitId, setSelectedStoryHabitId] = useState<string | undefined>(undefined);
+  const [storyMessage, setStoryMessage] = useState('');
+
+  // Need Support Modal State
+  const [needSupportVisible, setNeedSupportVisible] = useState(false);
+  const [selectedSupportHabitId, setSelectedSupportHabitId] = useState<string | undefined>(undefined);
+  const [supportMessage, setSupportMessage] = useState('');
 
   const handleToggle = (index: number) => {
     const habit = manager.getHabits()[index];
@@ -135,11 +169,73 @@ export default function HabitsTab() {
     setConfirmUncheckIdx(null);
   };
 
-  const handleDeleteHabit = (index: number) => {
-    manager.habits.splice(index, 1);
+  const handleConfirmDelete = () => {
+    if (confirmDeleteIdx !== null) {
+      manager.habits.splice(confirmDeleteIdx, 1);
+      setActionedIndex(null);
+      setEditingIndex(null);
+      setVersion(v => v + 1);
+      setConfirmDeleteIdx(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDeleteIdx(null);
+  };
+
+  // Share Story Modal Handlers
+  const handleOpenShareStory = (habitId: string) => {
+    setSelectedStoryHabitId(habitId);
+    setStoryMessage('');
+    setShareStoryVisible(true);
+  };
+
+  const handleSendShareStory = () => {
+    // TODO: Implement send logic (e.g., API call)
+    // Emit event to notify the social tab
+    if (selectedStoryHabitId) {
+      const selectedHabit = manager.getHabits().find(h => h.id === selectedStoryHabitId);
+      SupportEventEmitter.emit('add-success-story', {
+        habitId: selectedStoryHabitId,
+        habitTitle: selectedHabit?.title || '',
+        story: storyMessage,
+      });
+    }
+    setShareStoryVisible(false);
+  };
+
+  const handleCancelShareStory = () => {
+    setShareStoryVisible(false);
+    setSelectedStoryHabitId(undefined);
+  };
+
+  const handleNeedSupport = (index: number) => {
+    setSelectedSupportHabitId(manager.getHabits()[index].id || `habit-${index}`);
+    setSupportMessage('');
+    setNeedSupportVisible(true);
     setActionedIndex(null);
-    setEditingIndex(null);
-    setVersion(v => v + 1);
+  };
+
+  const handleSendNeedSupport = () => {
+    // TODO: Implement send logic (e.g., API call)
+    // Emit event to notify the social tab
+    if (selectedSupportHabitId) {
+      const selectedHabit = manager.getHabits().find(h => h.id === selectedSupportHabitId);
+      SupportEventEmitter.emit('add-support-request', {
+        habitId: selectedSupportHabitId,
+        habitTitle: selectedHabit?.title || '',
+        comment: supportMessage,
+      });
+    }
+    setNeedSupportVisible(false);
+  };
+
+  const handleCancelNeedSupport = () => {
+    setNeedSupportVisible(false);
+  };
+
+  const handleDeleteHabit = (index: number) => {
+    setConfirmDeleteIdx(index);
   };
 
   const handleEditHabit = (index: number) => {
@@ -207,7 +303,7 @@ export default function HabitsTab() {
           <View style={{ paddingHorizontal: 12, marginTop: 0 }}>
             {/* Next Achievement Card */}
             <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-              <NextAchievementCard habits={manager.getHabits()} manager={manager} />
+              <NextAchievementCard habits={manager.getHabits()} manager={manager} onShareStory={handleOpenShareStory} />
             </GlassCard>
             {/* Habits List */}
             <View style={{ marginTop: 18, marginBottom: 8 }}>
@@ -225,6 +321,7 @@ export default function HabitsTab() {
                   showActions={actionedIndex === i}
                   onDelete={() => handleDeleteHabit(i)}
                   onEdit={() => handleEditHabit(i)}
+                  onNeedSupport={() => handleNeedSupport(i)}
                 />
               ))}
               {/* Add Habit Button UI */}
@@ -266,6 +363,42 @@ export default function HabitsTab() {
           </View>
         </View>
       </Modal>
+      {/* Custom Modal for Delete Confirmation */}
+      <Modal
+        visible={confirmDeleteIdx !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelDelete}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.card}>
+            <Text style={modalStyles.title}>Delete Habit?</Text>
+            <Text style={modalStyles.message}>Are you sure you want to delete this habit? This action cannot be undone.</Text>
+            <View style={modalStyles.buttonRow}>
+              <TouchableOpacity style={modalStyles.cancelButton} onPress={handleCancelDelete}>
+                <Text style={modalStyles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[modalStyles.uncheckButton, { backgroundColor: Colors.main.textSecondary }]} onPress={handleConfirmDelete}>
+                <Text style={modalStyles.uncheckButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <ShareStoryModal
+        visible={shareStoryVisible}
+        message={storyMessage}
+        onChangeMessage={setStoryMessage}
+        onSend={handleSendShareStory}
+        onCancel={handleCancelShareStory}
+      />
+      <NeedSupportModal
+        visible={needSupportVisible}
+        message={supportMessage}
+        onChangeMessage={setSupportMessage}
+        onSend={handleSendNeedSupport}
+        onCancel={handleCancelNeedSupport}
+      />
     </View>
   );
 }

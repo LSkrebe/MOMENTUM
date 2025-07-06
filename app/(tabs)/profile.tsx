@@ -246,13 +246,9 @@ export default function ProfileScreen() {
 
           {/* Stats Card */}
           <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-            <ShareCard onBecomeFeatured={handleShareProfile} onNeedSupport={handleOpenNeedSupport} onShareStory={handleOpenShareStory} onFourthAction={handleInviteFriend} />
+            <ShareCard onBecomeFeatured={handleShareProfile} onNeedSupport={handleOpenNeedSupport} onFourthAction={handleInviteFriend} />
           </GlassCard>
 
-          {/* Top Performers List */}
-          <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-            <LeaderboardCard users={leaderboardManager.getLeaderboardUsers()} currentUser={mapProfileUserToUser(user)} />
-          </GlassCard>
         </View>
       </ScrollView>
       <NeedSupportModal

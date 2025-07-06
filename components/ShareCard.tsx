@@ -4,14 +4,12 @@ import Colors from '../constants/Colors';
 
 interface ShareCardProps {
   onBecomeFeatured?: () => void;
-  onShareStory?: () => void;
   onNeedSupport?: () => void;
   onFourthAction?: () => void;
 }
 
 const ShareCard: React.FC<ShareCardProps> = ({
   onBecomeFeatured,
-  onShareStory,
   onNeedSupport,
   onFourthAction,
 }) => (
@@ -24,9 +22,6 @@ const ShareCard: React.FC<ShareCardProps> = ({
     </TouchableOpacity>
     <TouchableOpacity style={styles.button} onPress={onFourthAction}>
       <Text style={styles.buttonText}>Invite Friend</Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={styles.button} onPress={onShareStory}>
-      <Text style={styles.buttonText}>Share Story</Text>
     </TouchableOpacity>
   </View>
 );

@@ -4,38 +4,28 @@ import Colors from '../constants/Colors';
 
 interface ShareStoryModalProps {
   visible: boolean;
-  habits: { id: string; title: string }[];
-  selectedHabitId?: string;
-  onSelectHabit: (id: string) => void;
   message: string;
   onChangeMessage: (msg: string) => void;
   onSend: () => void;
   onCancel: () => void;
-  step: 1 | 2;
-  onBack?: () => void;
 }
 
 const ShareStoryModal: React.FC<ShareStoryModalProps> = ({
   visible,
-  habits,
-  selectedHabitId,
-  onSelectHabit,
   message,
   onChangeMessage,
   onSend,
   onCancel,
-  step,
-  onBack,
 }) => {
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    if (visible && step === 2 && inputRef.current) {
+    if (visible && inputRef.current) {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
     }
-  }, [visible, step]);
+  }, [visible]);
 
   return (
     <Modal
@@ -47,51 +37,29 @@ const ShareStoryModal: React.FC<ShareStoryModalProps> = ({
       <View style={styles.overlay}>
         <View style={styles.card}>
           <Text style={styles.title}>Share Success Story</Text>
-          {step === 1 && (
-            <>
-              <Text style={styles.label}>Select a Habit</Text>
-              <View style={styles.pickerContainer}>
-                {habits.map(habit => (
-                  <TouchableOpacity
-                    key={habit.id}
-                    style={[styles.pickerItem, styles.pickerItemFullWidth, selectedHabitId === habit.id && styles.pickerItemSelected]}
-                    onPress={() => onSelectHabit(habit.id)}
-                  >
-                    <Text style={[styles.pickerItemText, selectedHabitId === habit.id && styles.pickerItemTextSelected]}>
-                      {habit.title}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-          {step === 2 && (
-            <>
-              <TextInput
-                ref={inputRef}
-                style={styles.input}
-                placeholder="Share your success story..."
-                placeholderTextColor={Colors.main.textSecondary}
-                value={message}
-                onChangeText={onChangeMessage}
-                multiline
-                textAlignVertical="top"
-                textAlign="left"
-              />
-              <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.cancelButton} onPress={onBack}>
-                  <Text style={styles.cancelButtonText}>Back</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.sendButton, { opacity: message.trim() ? 1 : 0.5 }]}
-                  onPress={onSend}
-                  disabled={!message.trim()}
-                >
-                  <Text style={styles.sendButtonText}>Share</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
+          <TextInput
+            ref={inputRef}
+            style={styles.input}
+            placeholder="Share your success story..."
+            placeholderTextColor={Colors.main.textSecondary}
+            value={message}
+            onChangeText={onChangeMessage}
+            multiline
+            textAlignVertical="top"
+            textAlign="left"
+          />
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sendButton, { opacity: message.trim() ? 1 : 0.5 }]}
+              onPress={onSend}
+              disabled={!message.trim()}
+            >
+              <Text style={styles.sendButtonText}>Share</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>

@@ -19,12 +19,13 @@ interface HabitCardProps {
   showActions?: boolean;
   onDelete?: () => void;
   onEdit?: () => void;
+  onNeedSupport?: () => void;
 }
 
 const BOTTLE_HEIGHT = 74;
 const BOTTLE_WIDTH = 320; // fallback, should be set by parent
 
-export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = BOTTLE_WIDTH, editable, inputValue, onInputChange, onInputBlur, onLongPress, showActions, onDelete, onEdit }: HabitCardProps) {
+export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = BOTTLE_WIDTH, editable, inputValue, onInputChange, onInputBlur, onLongPress, showActions, onDelete, onEdit, onNeedSupport }: HabitCardProps) {
   const completed = !!habit.completedToday;
   const textColor = completed ? Colors.main.textPrimary : Colors.main.textSecondary;
 
@@ -53,7 +54,7 @@ export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = B
   // ------------------------
 
   // Shrink width if actions are shown
-  const effectiveWidth = (showActions ? bottleWidth - 80 : bottleWidth) + 25
+  const effectiveWidth = (showActions ? bottleWidth - 120 : bottleWidth) + 25
 
   return (
     <View style={[
@@ -135,6 +136,13 @@ export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = B
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="pencil-outline" size={22} color={Colors.main.accent} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onNeedSupport}
+            style={{ marginRight: 12 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="add-circle-outline" size={22} color={Colors.main.accent} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={onDelete}
