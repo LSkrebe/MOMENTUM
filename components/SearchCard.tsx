@@ -20,6 +20,7 @@ const SearchCard: React.FC<SearchCardProps> = ({ value, onChangeText, onFocus, o
         onChangeText={onChangeText}
         onFocus={onFocus}
         onBlur={onBlur}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       />
     </View>
   );

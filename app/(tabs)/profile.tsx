@@ -19,6 +19,7 @@ import ShareStoryModal from '../../components/ShareStoryModal';
 import { Habit } from '../../models/Habit';
 import SupportEventEmitter from '../../components/SupportEventEmitter';
 import ShareableProfileCard from '../../components/ShareableProfileCard';
+import ChartCard from '../../components/ChartCard';
 
 // Initialize user data
 const user = new ProfileUser({
@@ -65,41 +66,46 @@ export default function ProfileScreen() {
     new Habit({ id: '3', title: 'Meditation' }),
   ];
 
-  const [needSupportVisible, setNeedSupportVisible] = useState(false);
-  const [selectedHabitId, setSelectedHabitId] = useState<string | undefined>(undefined);
-  const [supportMessage, setSupportMessage] = useState('');
-  const [needSupportStep, setNeedSupportStep] = useState<1 | 2>(1);
+  // Sample chart data for the last 7 days
+  const chartData = {
+    supporters: [
+      { date: 'Mon', value: 12 },
+      { date: 'Tue', value: 18 },
+      { date: 'Wed', value: 15 },
+      { date: 'Thu', value: 22 },
+      { date: 'Fri', value: 19 },
+      { date: 'Sat', value: 25 },
+      { date: 'Sun', value: 21 },
+    ],
+    habitsDone: [
+      { date: 'Mon', value: 8 },
+      { date: 'Tue', value: 12 },
+      { date: 'Wed', value: 10 },
+      { date: 'Thu', value: 15 },
+      { date: 'Fri', value: 13 },
+      { date: 'Sat', value: 18 },
+      { date: 'Sun', value: 16 },
+    ],
+    supporting: [
+      { date: 'Mon', value: 5 },
+      { date: 'Tue', value: 8 },
+      { date: 'Wed', value: 6 },
+      { date: 'Thu', value: 12 },
+      { date: 'Fri', value: 9 },
+      { date: 'Sat', value: 15 },
+      { date: 'Sun', value: 11 },
+    ],
+  };
 
   // Share Story Modal State
   const [shareStoryVisible, setShareStoryVisible] = useState(false);
   const [selectedStoryHabitId, setSelectedStoryHabitId] = useState<string | undefined>(undefined);
   const [storyMessage, setStoryMessage] = useState('');
-  const [shareStoryStep, setShareStoryStep] = useState<1 | 2>(1);
 
-  const handleOpenNeedSupport = () => {
-    setNeedSupportVisible(true);
-    setSelectedHabitId(undefined);
-    setSupportMessage('');
-    setNeedSupportStep(1);
-  };
   const handleOpenShareStory = () => {
     setShareStoryVisible(true);
     setSelectedStoryHabitId(undefined);
     setStoryMessage('');
-    setShareStoryStep(1);
-  };
-  const handleSendNeedSupport = () => {
-    // TODO: Implement send logic (e.g., API call)
-    // Emit event to notify the social tab
-    if (selectedHabitId) {
-      const selectedHabit = userHabits.find(h => h.id === selectedHabitId);
-      SupportEventEmitter.emit('add-support-request', {
-        habitId: selectedHabitId,
-        habitTitle: selectedHabit?.title || '',
-        comment: supportMessage,
-      });
-    }
-    setNeedSupportVisible(false);
   };
   const handleSendShareStory = () => {
     // TODO: Implement send logic (e.g., API call)
@@ -114,27 +120,8 @@ export default function ProfileScreen() {
     }
     setShareStoryVisible(false);
   };
-  const handleCancelNeedSupport = () => {
-    setNeedSupportVisible(false);
-  };
   const handleCancelShareStory = () => {
     setShareStoryVisible(false);
-  };
-  const handleSelectHabit = (id: string) => {
-    setSelectedHabitId(id);
-    setNeedSupportStep(2);
-  };
-  const handleSelectStoryHabit = (id: string) => {
-    setSelectedStoryHabitId(id);
-    setShareStoryStep(2);
-  };
-  const handleBackToHabitPicker = () => {
-    setNeedSupportStep(1);
-    setSupportMessage('');
-  };
-  const handleBackToStoryHabitPicker = () => {
-    setShareStoryStep(1);
-    setStoryMessage('');
   };
 
   const handleInviteFriend = async () => {
@@ -246,34 +233,22 @@ export default function ProfileScreen() {
 
           {/* Stats Card */}
           <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-            <ShareCard onBecomeFeatured={handleShareProfile} onNeedSupport={handleOpenNeedSupport} onFourthAction={handleInviteFriend} />
+            <ShareCard onBecomeFeatured={handleShareProfile} onFourthAction={handleInviteFriend} />
+          </GlassCard>
+
+          {/* Chart Card */}
+          <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
+            <ChartCard data={chartData} />
           </GlassCard>
 
         </View>
       </ScrollView>
-      <NeedSupportModal
-        visible={needSupportVisible}
-        habits={userHabits.map(h => ({ id: h.id || '', title: h.title }))}
-        selectedHabitId={selectedHabitId}
-        onSelectHabit={handleSelectHabit}
-        message={supportMessage}
-        onChangeMessage={setSupportMessage}
-        onSend={handleSendNeedSupport}
-        onCancel={handleCancelNeedSupport}
-        step={needSupportStep}
-        onBack={handleBackToHabitPicker}
-      />
       <ShareStoryModal
         visible={shareStoryVisible}
-        habits={userHabits.map(h => ({ id: h.id || '', title: h.title }))}
-        selectedHabitId={selectedStoryHabitId}
-        onSelectHabit={handleSelectStoryHabit}
         message={storyMessage}
         onChangeMessage={setStoryMessage}
         onSend={handleSendShareStory}
         onCancel={handleCancelShareStory}
-        step={shareStoryStep}
-        onBack={handleBackToStoryHabitPicker}
       />
       {/* Hidden ShareableProfileCard for image capture */}
       <View style={{ position: 'absolute', left: -1000, top: -1000 }}>
@@ -321,5 +296,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 1,
     marginBottom: 16,
+  },
+  chartSectionTitle: {
+    color: Colors.main.textPrimary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    marginBottom: 12,
   },
 }); 

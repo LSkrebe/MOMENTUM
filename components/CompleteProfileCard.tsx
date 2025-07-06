@@ -17,10 +17,6 @@ const CompleteProfileCard: React.FC<CompleteProfileCardProps> = ({ user }) => (
       <Text style={styles.profileTitle}>{user.title}</Text>
       <Text style={styles.profileLevel}>Level {user.level}</Text>
     </View>
-    <Text style={styles.profileDescription}>
-      Elite habit performer with incredible consistency across multiple categories. 
-      Top supporter in the community with {user.supporters} supporters.
-    </Text>
     <View style={styles.profileStats}>
       <Text style={styles.profileValue}>{user.habitsCompleted.toLocaleString()}</Text>
       <Text style={styles.profileLabel}>Habits Done</Text>
@@ -49,7 +45,7 @@ const styles = StyleSheet.create({
   },
   profileCenter: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 64,
   },
   avatarContainer: {
     backgroundColor: Colors.main.accent,
