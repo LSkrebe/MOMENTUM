@@ -264,10 +264,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.main.border,
   },
   supportButton: {
-    marginRight: 6,
+    marginRight: 0,
   },
   commentButton: {
-    marginLeft: 6,
+    marginLeft: 0,
   },
   actionButtonText: {
     color: Colors.main.accent,

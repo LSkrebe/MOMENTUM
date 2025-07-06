@@ -10,35 +10,35 @@ function getImageSource(img: any) {
   return require('../assets/images/icon.png');
 }
 
-const FeaturedProfileCard = ({ user }: { user: User }) => (
-  <Pressable style={styles.profileCard}>
-    <View style={styles.profileCenter}>
-      <View style={styles.avatarContainer}>
-        <Image source={getImageSource(user.profileImage)} style={styles.profileAvatar} />
+interface FeaturedProfileCardProps {
+  user: User;
+}
+
+const FeaturedProfileCard = ({ user }: FeaturedProfileCardProps) => (
+  <View>
+    <Pressable style={styles.profileCard}>
+      <View style={styles.profileHeader}>
+        <View style={styles.avatarContainer}>
+          <Image source={getImageSource(user.profileImage)} style={styles.profileAvatar} />
+        </View>
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileName}>{user.name}</Text>
+          <Text style={styles.profileTitle}>Level {(user as any).level ?? 42}</Text>
+        </View>
       </View>
-      <Text style={styles.profileName}>{user.name}</Text>
-      <Text style={styles.profileTitle}>{(user as any).title ?? 'Elite Performer'}</Text>
-      <Text style={styles.profileLevel}>Level {(user as any).level ?? 42}</Text>
-    </View>
-    <Text style={styles.profileDescription}>
-      Elite habit performer with incredible consistency across multiple categories. 
-      Top supporter in the community with {(user as any).supporters ?? 892} supporters.
-    </Text>
-    <View style={styles.profileStats}>
-      <Text style={styles.profileValue}>{(user.stats?.habitsCompleted ?? 15420).toLocaleString()}</Text>
-      <Text style={styles.profileLabel}>Habits Done</Text>
-    </View>
-    <View style={styles.profileMetrics}>
-      <View style={styles.profileMetric}>
-        <Text style={styles.profileMetricValue}>{user.stats?.longestStreak ?? 67}</Text>
-        <Text style={styles.profileMetricLabel}>Day Streak</Text>
+      <View style={styles.lineBreak} />
+      <View style={styles.profileMetrics}>
+        <View style={styles.profileMetric}>
+          <Text style={styles.profileMetricValue}>{(user.stats?.habitsCompleted ?? 15420).toLocaleString()}</Text>
+          <Text style={styles.profileMetricLabel}>Habits Done</Text>
+        </View>
+        <View style={styles.profileMetric}>
+          <Text style={styles.profileMetricValue}>{user.stats?.longestStreak ?? 67}</Text>
+          <Text style={styles.profileMetricLabel}>Day Streak</Text>
+        </View>
       </View>
-      <View style={styles.profileMetric}>
-        <Text style={styles.profileMetricValue}>{(user as any).supporters ?? 892}</Text>
-        <Text style={styles.profileMetricLabel}>Supporters</Text>
-      </View>
-    </View>
-  </Pressable>
+    </Pressable>
+  </View>
 );
 
 const styles = StyleSheet.create({
@@ -50,65 +50,44 @@ const styles = StyleSheet.create({
     borderColor: Colors.main.border,
     alignItems: 'center',
   },
-  profileCenter: {
+  profileHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
   },
+  profileInfo: {
+    flex: 1,
+  },
   avatarContainer: {
     backgroundColor: Colors.main.accent,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginRight: 16,
   },
   profileAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   profileName: {
     color: Colors.main.textPrimary,
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 4,
   },
   profileTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
     marginBottom: 4,
     color: Colors.main.textSecondary,
-  },
-  profileLevel: {
-    color: Colors.main.textSecondary,
-    fontSize: 14,
-  },
-  profileDescription: {
-    color: Colors.main.textSecondary,
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  profileStats: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  profileValue: {
-    color: Colors.main.accent,
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  profileLabel: {
-    color: Colors.main.textSecondary,
-    fontSize: 14,
   },
   profileMetrics: {
+    alignItems: 'center',
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-around',
-    width: '100%',
   },
   profileMetric: {
     alignItems: 'center',
@@ -123,6 +102,12 @@ const styles = StyleSheet.create({
   profileMetricLabel: {
     color: Colors.main.textSecondary,
     fontSize: 12,
+  },
+  lineBreak: {
+    width: '100%',
+    height: 1,
+    backgroundColor: Colors.main.border,
+    marginVertical: 16,
   },
 });
 

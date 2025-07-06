@@ -14,7 +14,6 @@ const CompleteProfileCard: React.FC<CompleteProfileCardProps> = ({ user }) => (
         <Image source={user.avatar} style={styles.profileAvatar} />
       </View>
       <Text style={styles.profileName}>{user.name}</Text>
-      <Text style={styles.profileTitle}>{user.title}</Text>
       <Text style={styles.profileLevel}>Level {user.level}</Text>
     </View>
     <View style={styles.profileStats}>
@@ -66,12 +65,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 4,
-  },
-  profileTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-    color: Colors.main.textSecondary,
   },
   profileLevel: {
     color: Colors.main.textSecondary,
