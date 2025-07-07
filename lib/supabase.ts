@@ -1,10 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/env';
 
-const supabaseUrl = 'https://gnmfnzliivwgohdqplwc.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdubWZuemxpaXZ3Z29oZHFwbHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3MjM4NzEsImV4cCI6MjA2NzI5OTg3MX0.keXhWz1EX1YRpEY6LQE3-Prs6UHoFAwyc0xPuAoft8o';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -78,12 +76,16 @@ export const db = {
   },
 
   async createUser(userData: Partial<User>): Promise<User> {
+    // Ensure name is set to a default if not provided
+    const userToInsert = {
+      name: userData.name || 'User', // Default name
+      ...userData,
+    };
     const { data, error } = await supabase
       .from('users')
-      .insert([userData])
+      .insert([userToInsert])
       .select()
       .single();
-    
     if (error) throw error;
     return data;
   },

@@ -6,13 +6,47 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, BackHandler, View } from 'react-native';
 import 'react-native-reanimated';
+import { useSuperwallOnboarding } from '../lib/superwall';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserProvider, useUser } from '../contexts/UserContext';
 
-export default function RootLayout() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+function RootLayoutInner() {
+  const [isLoading, onboardingCompleted] = useSuperwallOnboarding();
+  const { createUser } = useUser();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  useEffect(() => {
+    console.log('onboardingCompleted:', onboardingCompleted);
+  }, [onboardingCompleted]);
+
+  useEffect(() => {
+    if (onboardingCompleted) {
+      AsyncStorage.getItem('userId').then(superwallUserId => {
+        console.log('Superwall userId from AsyncStorage:', superwallUserId);
+        if (!superwallUserId) {
+          // DEV ONLY: Mock a userId for local testing
+          superwallUserId = '00000000-0000-0000-0000-000000000000'; // Use a valid UUID
+          AsyncStorage.setItem('userId', superwallUserId);
+          console.warn('DEV: Mocked Superwall userId for testing:', superwallUserId);
+        }
+        if (superwallUserId) {
+          createUser({ id: superwallUserId })
+            .then(() => {
+              console.log('Supabase user creation succeeded for id:', superwallUserId);
+            })
+            .catch(e => {
+              console.error('Supabase createUser error:', e);
+            });
+        } else {
+          console.warn('No Superwall userId found in AsyncStorage');
+        }
+      }).catch(e => {
+        console.error('Error reading userId from AsyncStorage:', e);
+      });
+    }
+  }, [onboardingCompleted]);
 
   useEffect(() => {
     const handleBackPress = () => {
@@ -25,35 +59,6 @@ export default function RootLayout() {
     const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
     return () => subscription.remove();
   }, [onboardingCompleted]);
-
-  useEffect(() => {
-    const initializeSuperwall = async () => {
-      try {
-        await Superwall.configure({
-          apiKey: 'pk_abc2f3b7371db02d45dd747a44882abc25b170e44043a90b',
-        });
-        if (Superwall.shared && Superwall.shared.register) {
-          // @ts-ignore - Superwall types are not properly exported
-          await Superwall.shared.register({
-            placement: 'onboarding',
-            feature: () => {
-              setOnboardingCompleted(true);
-              setIsLoading(false);
-            }
-          });
-        } else {
-          setOnboardingCompleted(true);
-          setIsLoading(false);
-          console.warn('Superwall.shared.register not available. Onboarding paywall will not show.');
-        }
-      } catch (error) {
-        console.error('Error initializing Superwall:', error);
-        setOnboardingCompleted(true);
-        setIsLoading(false);
-      }
-    };
-    initializeSuperwall();
-  }, []);
 
   if (!loaded || isLoading) {
     return (
@@ -72,11 +77,19 @@ export default function RootLayout() {
   }
 
   return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
     <ThemeProvider value={DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="auto"/>
+      <UserProvider>
+        <RootLayoutInner />
+        <StatusBar style="auto" />
+      </UserProvider>
     </ThemeProvider>
   );
 }

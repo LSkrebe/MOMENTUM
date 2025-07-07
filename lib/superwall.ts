@@ -1,8 +1,9 @@
+import { useEffect, useState } from 'react';
 import Superwall from '@superwall/react-native-superwall';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SUPERWALL_API_KEY } from '../constants/env';
 
 // Superwall configuration
-const SUPERWALL_API_KEY = 'pk_abc2f3b7371db02d45dd747a44882abc25b170e44043a90b';
 const CAMPAIGN_TRIGGER = 'onboarding';
 
 // Initialize Superwall
@@ -76,4 +77,46 @@ export const clearStoredUserData = async () => {
   } catch (error) {
     console.error('Error clearing stored user data:', error);
   }
-}; 
+};
+
+export const getSuperwallUserData = async () => {
+  const userId = await AsyncStorage.getItem('userId');
+  // Add more fields as needed from Superwall
+  return { id: userId };
+};
+
+export function useSuperwallOnboarding() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+
+  useEffect(() => {
+    const initializeSuperwall = async () => {
+      try {
+        await Superwall.configure({
+          apiKey: SUPERWALL_API_KEY,
+        });
+        if (Superwall.shared && Superwall.shared.register) {
+          // @ts-ignore - Superwall types are not properly exported
+          await Superwall.shared.register({
+            placement: 'onboarding',
+            feature: () => {
+              setOnboardingCompleted(true);
+              setIsLoading(false);
+            }
+          });
+        } else {
+          setOnboardingCompleted(true);
+          setIsLoading(false);
+          console.warn('Superwall.shared.register not available. Onboarding paywall will not show.');
+        }
+      } catch (error) {
+        console.error('Error initializing Superwall:', error);
+        setOnboardingCompleted(true);
+        setIsLoading(false);
+      }
+    };
+    initializeSuperwall();
+  }, []);
+
+  return [isLoading, onboardingCompleted] as const;
+} 
