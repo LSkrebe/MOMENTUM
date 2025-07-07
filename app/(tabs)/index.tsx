@@ -135,7 +135,6 @@ export default function HabitsTab() {
   const [inputValue, setInputValue] = useState('');
   const [actionedIndex, setActionedIndex] = useState<number | null>(null);
   const [confirmUncheckIdx, setConfirmUncheckIdx] = useState<number | null>(null);
-  const [confirmDeleteIdx, setConfirmDeleteIdx] = useState<number | null>(null);
 
   // Share Story Modal State
   const [shareStoryVisible, setShareStoryVisible] = useState(false);
@@ -169,73 +168,11 @@ export default function HabitsTab() {
     setConfirmUncheckIdx(null);
   };
 
-  const handleConfirmDelete = () => {
-    if (confirmDeleteIdx !== null) {
-      manager.habits.splice(confirmDeleteIdx, 1);
-      setActionedIndex(null);
-      setEditingIndex(null);
-      setVersion(v => v + 1);
-      setConfirmDeleteIdx(null);
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setConfirmDeleteIdx(null);
-  };
-
-  // Share Story Modal Handlers
-  const handleOpenShareStory = (habitId: string) => {
-    setSelectedStoryHabitId(habitId);
-    setStoryMessage('');
-    setShareStoryVisible(true);
-  };
-
-  const handleSendShareStory = () => {
-    // TODO: Implement send logic (e.g., API call)
-    // Emit event to notify the social tab
-    if (selectedStoryHabitId) {
-      const selectedHabit = manager.getHabits().find(h => h.id === selectedStoryHabitId);
-      SupportEventEmitter.emit('add-success-story', {
-        habitId: selectedStoryHabitId,
-        habitTitle: selectedHabit?.title || '',
-        story: storyMessage,
-      });
-    }
-    setShareStoryVisible(false);
-  };
-
-  const handleCancelShareStory = () => {
-    setShareStoryVisible(false);
-    setSelectedStoryHabitId(undefined);
-  };
-
-  const handleNeedSupport = (index: number) => {
-    setSelectedSupportHabitId(manager.getHabits()[index].id || `habit-${index}`);
-    setSupportMessage('');
-    setNeedSupportVisible(true);
-    setActionedIndex(null);
-  };
-
-  const handleSendNeedSupport = () => {
-    // TODO: Implement send logic (e.g., API call)
-    // Emit event to notify the social tab
-    if (selectedSupportHabitId) {
-      const selectedHabit = manager.getHabits().find(h => h.id === selectedSupportHabitId);
-      SupportEventEmitter.emit('add-support-request', {
-        habitId: selectedSupportHabitId,
-        habitTitle: selectedHabit?.title || '',
-        comment: supportMessage,
-      });
-    }
-    setNeedSupportVisible(false);
-  };
-
-  const handleCancelNeedSupport = () => {
-    setNeedSupportVisible(false);
-  };
-
   const handleDeleteHabit = (index: number) => {
-    setConfirmDeleteIdx(index);
+    manager.habits.splice(index, 1);
+    setActionedIndex(null);
+    setEditingIndex(null);
+    setVersion(v => v + 1);
   };
 
   const handleEditHabit = (index: number) => {
@@ -279,6 +216,58 @@ export default function HabitsTab() {
       };
     }, [])
   );
+
+  // Share Story Modal Handlers
+  const handleOpenShareStory = (habitId: string) => {
+    setSelectedStoryHabitId(habitId);
+    setStoryMessage('');
+    setShareStoryVisible(true);
+  };
+
+  const handleSendShareStory = () => {
+    // TODO: Implement send logic (e.g., API call)
+    // Emit event to notify the social tab
+    if (selectedStoryHabitId) {
+      const selectedHabit = manager.getHabits().find(h => h.id === selectedStoryHabitId);
+      SupportEventEmitter.emit('add-success-story', {
+        habitId: selectedStoryHabitId,
+        habitTitle: selectedHabit?.title || '',
+        story: storyMessage,
+      });
+    }
+    setShareStoryVisible(false);
+  };
+
+  const handleCancelShareStory = () => {
+    setShareStoryVisible(false);
+    setSelectedStoryHabitId(undefined);
+  };
+
+  // Need Support Modal Handlers
+  const handleNeedSupport = (index: number) => {
+    setSelectedSupportHabitId(manager.getHabits()[index].id || `habit-${index}`);
+    setSupportMessage('');
+    setNeedSupportVisible(true);
+    setActionedIndex(null);
+  };
+
+  const handleSendNeedSupport = () => {
+    // TODO: Implement send logic (e.g., API call)
+    // Emit event to notify the social tab
+    if (selectedSupportHabitId) {
+      const selectedHabit = manager.getHabits().find(h => h.id === selectedSupportHabitId);
+      SupportEventEmitter.emit('add-support-request', {
+        habitId: selectedSupportHabitId,
+        habitTitle: selectedHabit?.title || '',
+        comment: supportMessage,
+      });
+    }
+    setNeedSupportVisible(false);
+  };
+
+  const handleCancelNeedSupport = () => {
+    setNeedSupportVisible(false);
+  };
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}> 
@@ -358,28 +347,6 @@ export default function HabitsTab() {
               </TouchableOpacity>
               <TouchableOpacity style={modalStyles.uncheckButton} onPress={handleConfirmUncheck}>
                 <Text style={modalStyles.uncheckButtonText}>Uncheck</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-      {/* Custom Modal for Delete Confirmation */}
-      <Modal
-        visible={confirmDeleteIdx !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCancelDelete}
-      >
-        <View style={modalStyles.overlay}>
-          <View style={modalStyles.card}>
-            <Text style={modalStyles.title}>Delete Habit?</Text>
-            <Text style={modalStyles.message}>Are you sure you want to delete this habit? This action cannot be undone.</Text>
-            <View style={modalStyles.buttonRow}>
-              <TouchableOpacity style={modalStyles.cancelButton} onPress={handleCancelDelete}>
-                <Text style={modalStyles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[modalStyles.uncheckButton, { backgroundColor: Colors.main.textSecondary }]} onPress={handleConfirmDelete}>
-                <Text style={modalStyles.uncheckButtonText}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>

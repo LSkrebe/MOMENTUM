@@ -140,10 +140,6 @@ export default function SocialScreen() {
                 <Text style={styles.sectionTitle}>SUCCESS STORY</Text>
                 <SuccessStoryCard story={socialManager.getSuccessStory()} />
               </GlassCard>
-              <GlassCard style={{ backgroundColor: Colors.main.surface, marginBottom: 18 }}>
-                <Text style={styles.sectionTitle}>FEATURED PERFORMER</Text>
-                <FeaturedProfileCard user={socialManager.getFeaturedProfile()} />
-              </GlassCard>
             </>
           )}
 
