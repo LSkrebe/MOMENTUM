@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, Dimensions, TextInput, Keyboard, Pressable, Animated, Alert, Modal, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, Dimensions, TextInput, Keyboard, Pressable, Animated, Alert, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/Colors';
 import { Habit } from '../../models/Habit';
@@ -13,17 +13,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import ShareStoryModal from '../../components/ShareStoryModal';
 import SupportEventEmitter from '../../components/SupportEventEmitter';
 import NeedSupportModal from '../../components/NeedSupportModal';
+import { useUser } from '../../contexts/UserContext';
+import { getHabitsForUser } from '../../lib/habits-crud';
 
 const { width } = Dimensions.get('window');
 const BOTTLE_CONTAINER_PADDING = 24;
 const BOTTLE_WIDTH = width - BOTTLE_CONTAINER_PADDING * 2;
 
-// Dummy data for UI
-const initialHabits = [
-  new Habit({ title: 'Morning Run', streakCount: 13, completedToday: false }),
-  new Habit({ title: 'Book Read', streakCount: 12, completedToday: false }),
-  new Habit({ title: 'Meditation', streakCount: 7, completedToday: false }),
-];
+// Remove initialHabits. We'll load from DB.
 
 // MotivationalMessage and MotivationalMessageManager definitions
 export interface MotivationalMessage {
@@ -128,8 +125,10 @@ function NextAchievementCard({ habits, manager, onShareStory }: { habits: Habit[
 }
 
 export default function HabitsTab() {
+  const { currentUser, loading: userLoading } = useUser();
+  const [habitsLoading, setHabitsLoading] = useState(true);
   const insets = useSafeAreaInsets();
-  const [manager] = useState(() => new HabitManager(initialHabits));
+  const [manager, setManager] = useState(() => new HabitManager([]));
   const [version, setVersion] = useState(0);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -217,6 +216,25 @@ export default function HabitsTab() {
     }, [])
   );
 
+  // Load habits from Supabase on mount or when user changes
+  useEffect(() => {
+    if (!currentUser || userLoading) return;
+    setHabitsLoading(true);
+    getHabitsForUser(currentUser.id)
+      .then(habitsArr => {
+        // Map to Habit class instances for animation logic
+        const habitObjs = habitsArr.map(h => new Habit({
+          id: h.id,
+          userId: h.userId,
+          title: h.title,
+          streakCount: h.streakCount,
+          completedToday: h.completedToday,
+        }));
+        setManager(new HabitManager(habitObjs));
+      })
+      .finally(() => setHabitsLoading(false));
+  }, [currentUser, userLoading]);
+
   // Share Story Modal Handlers
   const handleOpenShareStory = (habitId: string) => {
     setSelectedStoryHabitId(habitId);
@@ -268,6 +286,14 @@ export default function HabitsTab() {
   const handleCancelNeedSupport = () => {
     setNeedSupportVisible(false);
   };
+
+  if (userLoading || habitsLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.main.background }}>
+        <ActivityIndicator size="large" color={Colors.main.accent} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}> 
@@ -369,7 +395,6 @@ export default function HabitsTab() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -464,3 +489,4 @@ const modalStyles = StyleSheet.create({
     fontSize: 15,
   },
 });
+

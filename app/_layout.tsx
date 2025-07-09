@@ -7,45 +7,18 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, BackHandler, View } from 'react-native';
 import 'react-native-reanimated';
 import { useSuperwallOnboarding } from '../lib/superwall';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProvider, useUser } from '../contexts/UserContext';
+import { getStoredUserId, markOnboardingCompleted } from '../lib/superwall';
+import { getOrCreateUser, storeUserId } from '../lib/user-crud';
 
-function RootLayoutInner() {
+function RootLayoutInner({ initialUserId }: { initialUserId?: string }) {
   const [isLoading, onboardingCompleted] = useSuperwallOnboarding();
-  const { createUser } = useUser();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   useEffect(() => {
     console.log('onboardingCompleted:', onboardingCompleted);
-  }, [onboardingCompleted]);
-
-  useEffect(() => {
-    if (onboardingCompleted) {
-      AsyncStorage.getItem('userId').then(superwallUserId => {
-        console.log('Superwall userId from AsyncStorage:', superwallUserId);
-        if (!superwallUserId) {
-          // DEV ONLY: Mock a userId for local testing
-          superwallUserId = '00000000-0000-0000-0000-000000000000'; // Use a valid UUID
-          AsyncStorage.setItem('userId', superwallUserId);
-          console.warn('DEV: Mocked Superwall userId for testing:', superwallUserId);
-        }
-        if (superwallUserId) {
-          createUser({ id: superwallUserId })
-            .then(() => {
-              console.log('Supabase user creation succeeded for id:', superwallUserId);
-            })
-            .catch(e => {
-              console.error('Supabase createUser error:', e);
-            });
-        } else {
-          console.warn('No Superwall userId found in AsyncStorage');
-        }
-      }).catch(e => {
-        console.error('Error reading userId from AsyncStorage:', e);
-      });
-    }
   }, [onboardingCompleted]);
 
   useEffect(() => {
@@ -77,6 +50,23 @@ function RootLayoutInner() {
   }
 
   return (
+    <UserProvider initialUserId={initialUserId}>
+      <UserGate />
+      <StatusBar style="auto" />
+    </UserProvider>
+  );
+}
+
+function UserGate() {
+  const { loading } = useUser();
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
+  return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
     </Stack>
@@ -84,12 +74,44 @@ function RootLayoutInner() {
 }
 
 export default function RootLayout() {
+  const [initialUserId, setInitialUserId] = useState<string | undefined>(undefined);
+  const [checkingUser, setCheckingUser] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkUser = async () => {
+      // Try to get stored user ID
+      const storedId = await getStoredUserId();
+      const idToUse: string | undefined = storedId === null ? undefined : storedId;
+      let userId: string | undefined = undefined;
+      try {
+        const user = await getOrCreateUser(idToUse);
+        userId = user.id;
+        await storeUserId(userId);
+        await markOnboardingCompleted();
+      } catch (err) {
+        console.error('Error getting or creating user:', err);
+      }
+      if (isMounted) {
+        setInitialUserId(userId);
+        setCheckingUser(false);
+      }
+    };
+    checkUser();
+    return () => { isMounted = false; };
+  }, []);
+
+  if (checkingUser) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
+
   return (
     <ThemeProvider value={DefaultTheme}>
-      <UserProvider>
-        <RootLayoutInner />
-        <StatusBar style="auto" />
-      </UserProvider>
+      <RootLayoutInner initialUserId={initialUserId} />
     </ThemeProvider>
   );
 }
