@@ -14,7 +14,7 @@ import ShareStoryModal from '../../components/ShareStoryModal';
 import SupportEventEmitter from '../../components/SupportEventEmitter';
 import NeedSupportModal from '../../components/NeedSupportModal';
 import { useUser } from '../../contexts/UserContext';
-import { getHabitsForUser, createHabitForUser } from '../../lib/habits-crud';
+import { getHabitsForUser, createHabitForUser, updateHabit } from '../../lib/habits-crud';
 
 const { width } = Dimensions.get('window');
 const BOTTLE_CONTAINER_PADDING = 24;
@@ -149,20 +149,66 @@ export default function HabitsTab() {
   const [addingHabit, setAddingHabit] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
 
-  const handleToggle = (index: number) => {
+  const handleToggle = async (index: number) => {
     const habit = manager.getHabits()[index];
     if (habit.completedToday) {
       setConfirmUncheckIdx(index);
     } else {
-      manager.toggleHabit(index);
-      setVersion(v => v + 1);
+      // Mark as complete in db
+      if (habit.id) {
+        try {
+          await updateHabit(habit.id, {
+            completed_today: true,
+            streak_count: (habit.streakCount || 0) + 1,
+          });
+          // Re-fetch habits from db
+          if (currentUser) {
+            const habitsArr = await getHabitsForUser(currentUser.id);
+            habitsArr.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            const habitObjs = habitsArr.map(h => new Habit({
+              id: h.id,
+              userId: h.userId,
+              title: h.title,
+              streakCount: h.streakCount,
+              completedToday: h.completedToday,
+            }));
+            setManager(new HabitManager(habitObjs));
+            setVersion(v => v + 1);
+          }
+        } catch (err) {
+          console.log('Error updating habit in db:', err);
+        }
+      }
     }
   };
 
-  const handleConfirmUncheck = () => {
+  const handleConfirmUncheck = async () => {
     if (confirmUncheckIdx !== null) {
-      manager.toggleHabit(confirmUncheckIdx);
-      setVersion(v => v + 1);
+      const habit = manager.getHabits()[confirmUncheckIdx];
+      if (habit.id) {
+        try {
+          await updateHabit(habit.id, {
+            completed_today: false,
+            streak_count: Math.max((habit.streakCount || 1) - 1, 0),
+          });
+          // Re-fetch habits from db
+          if (currentUser) {
+            const habitsArr = await getHabitsForUser(currentUser.id);
+            habitsArr.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            const habitObjs = habitsArr.map(h => new Habit({
+              id: h.id,
+              userId: h.userId,
+              title: h.title,
+              streakCount: h.streakCount,
+              completedToday: h.completedToday,
+            }));
+            setManager(new HabitManager(habitObjs));
+            setVersion(v => v + 1);
+          }
+        } catch (err) {
+          console.log('Error updating habit in db:', err);
+        }
+      }
       setConfirmUncheckIdx(null);
     }
   };

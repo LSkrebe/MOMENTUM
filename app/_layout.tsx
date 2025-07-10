@@ -9,7 +9,7 @@ import 'react-native-reanimated';
 import { useSuperwallOnboarding } from '../lib/superwall';
 import { UserProvider, useUser } from '../contexts/UserContext';
 import { getStoredUserId, markOnboardingCompleted } from '../lib/superwall';
-import { getOrCreateUser, storeUserId } from '../lib/user-crud';
+import { getOrCreateUser } from '../lib/user-crud';
 
 function RootLayoutInner({ initialUserId }: { initialUserId?: string }) {
   const [isLoading, onboardingCompleted] = useSuperwallOnboarding();
@@ -80,15 +80,10 @@ export default function RootLayout() {
   useEffect(() => {
     let isMounted = true;
     const checkUser = async () => {
-      // Try to get stored user ID
-      const storedId = await getStoredUserId();
-      const idToUse: string | undefined = storedId === null ? undefined : storedId;
       let userId: string | undefined = undefined;
       try {
-        const user = await getOrCreateUser(idToUse);
+        const user = await getOrCreateUser();
         userId = user.id;
-        await storeUserId(userId);
-        await markOnboardingCompleted();
       } catch (err) {
         console.error('Error getting or creating user:', err);
       }
