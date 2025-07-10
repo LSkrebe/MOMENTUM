@@ -14,7 +14,7 @@ import ShareStoryModal from '../../components/ShareStoryModal';
 import SupportEventEmitter from '../../components/SupportEventEmitter';
 import NeedSupportModal from '../../components/NeedSupportModal';
 import { useUser } from '../../contexts/UserContext';
-import { getHabitsForUser } from '../../lib/habits-crud';
+import { getHabitsForUser, createHabitForUser } from '../../lib/habits-crud';
 
 const { width } = Dimensions.get('window');
 const BOTTLE_CONTAINER_PADDING = 24;
@@ -145,6 +145,10 @@ export default function HabitsTab() {
   const [selectedSupportHabitId, setSelectedSupportHabitId] = useState<string | undefined>(undefined);
   const [supportMessage, setSupportMessage] = useState('');
 
+  // New state for add habit placeholder
+  const [addingHabit, setAddingHabit] = useState(false);
+  const [addLoading, setAddLoading] = useState(false);
+
   const handleToggle = (index: number) => {
     const habit = manager.getHabits()[index];
     if (habit.completedToday) {
@@ -183,16 +187,15 @@ export default function HabitsTab() {
 
   const handleAddHabit = () => {
     setActionedIndex(null);
-    const newIndex = manager.addHabit('');
-    setEditingIndex(newIndex);
+    setAddingHabit(true);
     setInputValue('');
-    setVersion(v => v + 1);
   };
 
   const handleInputChange = (text: string) => {
     setInputValue(text);
   };
 
+  // For editing existing habits
   const handleInputBlur = (index: number) => {
     if (inputValue.trim() !== '') {
       manager.habits[index].title = inputValue.trim();
@@ -206,6 +209,34 @@ export default function HabitsTab() {
       setInputValue('');
       setVersion(v => v + 1);
     }
+  };
+
+  // For adding a new habit (placeholder input at end)
+  const handleAddInputBlur = async () => {
+    if (inputValue.trim() !== '' && currentUser) {
+      setAddLoading(true);
+      try {
+        await createHabitForUser(currentUser.id, inputValue.trim());
+        // Re-fetch habits from DB and update manager
+        const habitsArr = await getHabitsForUser(currentUser.id);
+        // Sort so the most recently created habit is last
+        habitsArr.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        const habitObjs = habitsArr.map(h => new Habit({
+          id: h.id,
+          userId: h.userId,
+          title: h.title,
+          streakCount: h.streakCount,
+          completedToday: h.completedToday,
+        }));
+        setManager(new HabitManager(habitObjs));
+        setVersion(v => v + 1);
+      } catch (err) {
+        // Optionally show error
+      }
+      setAddLoading(false);
+    }
+    setAddingHabit(false);
+    setInputValue('');
   };
 
   useFocusEffect(
@@ -222,6 +253,8 @@ export default function HabitsTab() {
     setHabitsLoading(true);
     getHabitsForUser(currentUser.id)
       .then(habitsArr => {
+        // Sort so the most recently created habit is last
+        habitsArr.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         // Map to Habit class instances for animation logic
         const habitObjs = habitsArr.map(h => new Habit({
           id: h.id,
@@ -339,15 +372,36 @@ export default function HabitsTab() {
                   onNeedSupport={() => handleNeedSupport(i)}
                 />
               ))}
+              {/* Add Habit Placeholder Input */}
+              {addingHabit && (
+                addLoading ? (
+                  <View style={{ height: 74, alignItems: 'center', justifyContent: 'center' }}>
+                    <ActivityIndicator size="small" color={Colors.main.accent} />
+                  </View>
+                ) : (
+                  <HabitCard
+                    key="add-placeholder"
+                    habit={new Habit({ title: '', streakCount: 0, completedToday: false })}
+                    editable={true}
+                    inputValue={inputValue}
+                    onInputChange={handleInputChange}
+                    onInputBlur={handleAddInputBlur}
+                    bottleWidth={BOTTLE_WIDTH}
+                    onToggle={() => {}}
+                  />
+                )
+              )}
               {/* Add Habit Button UI */}
-              <View style={{ marginTop: 8, alignItems: 'center' }}>
-                <Text
-                  style={{ color: Colors.main.accent, fontSize: 14, fontWeight: 'bold' }}
-                  onPress={handleAddHabit}
-                >
-                  Add Habit
-                </Text>
-              </View>
+              {!addingHabit && (
+                <View style={{ marginTop: 8, alignItems: 'center' }}>
+                  <Text
+                    style={{ color: Colors.main.accent, fontSize: 14, fontWeight: 'bold' }}
+                    onPress={handleAddHabit}
+                  >
+                    Add Habit
+                  </Text>
+                </View>
+              )}
             </View>
             {/* Motivational Card from a Supporter */}
             <GlassCard style={{ backgroundColor: Colors.main.surface, marginTop: 18, marginBottom: 18 }}>

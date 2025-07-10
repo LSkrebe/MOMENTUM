@@ -109,7 +109,7 @@ export default function HabitCard({ habit, onComplete, onToggle, bottleWidth = B
                 value={inputValue}
                 onChangeText={onInputChange}
                 onBlur={onInputBlur}
-                onSubmitEditing={() => { Keyboard.dismiss(); onInputBlur && onInputBlur(); }}
+                // Only use onBlur for add logic, remove onSubmitEditing to prevent double-inserts
                 returnKeyType="done"
               />
             ) : (
